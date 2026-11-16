@@ -1,0 +1,30 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        dependency-type: development
+
+  - package-ecosystem: npm
+    directory: /files-worker
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /push-worker
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /mcp-worker
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

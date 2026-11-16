@@ -1,0 +1,21 @@
+# openQomu con Caddy.
+# Sustituye openqomu.example.com por tu dominio; Caddy gestiona el TLS.
+openqomu.example.com {
+	root * /srv/openqomu/dist
+	encode gzip zstd
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options SAMEORIGIN
+		Permissions-Policy "camera=(), geolocation=(), microphone=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss: blob:; frame-src https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'"
+	}
+
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	# Fallback de la aplicación de página única.
+	try_files {path} {path}/ /index.html
+	file_server
+}

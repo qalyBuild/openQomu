@@ -1,0 +1,39 @@
+openQomu
+Copyright (C) 2026 openQomu contributors
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, version 3 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License along
+with this program. If not, see <https://www.gnu.org/licenses/>.
+
+---
+
+Third-party components
+
+The application bundles third-party libraries whose licenses are compatible
+with AGPL-3.0. The authoritative list is the dependency tree in `package.json`
+and the lockfile. Principal components:
+
+- React, React DOM — MIT
+- Vite — MIT
+- Tailwind CSS — MIT
+- Radix UI — MIT
+- shadcn/ui — MIT
+- Lucide — ISC
+- TipTap — MIT
+- dnd-kit — MIT
+- Recharts — MIT
+- Geist and Geist Mono fonts — SIL Open Font License 1.1
+- Firebase SDK — Apache-2.0
+- Capacitor — MIT
+- Cloudflare Workers types and Wrangler — MIT / Apache-2.0
+
+Run `npx license-checker --summary` for the complete inventory with versions.
+
+The name and logo are not covered by the license. See TRADEMARKS.md.

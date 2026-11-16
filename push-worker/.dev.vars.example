@@ -1,0 +1,6 @@
+# Copia a `.dev.vars` para `npm run dev` en push-worker.
+# Cuenta de servicio con roles/datastore.user y permisos de FCM (una sola línea).
+FIREBASE_SERVICE_ACCOUNT=
+FIREBASE_PROJECT_ID=
+FCM_PROJECT_ID=
+PUSH_ALLOWED_ORIGINS=http://localhost:5173,https://localhost

@@ -1,0 +1,436 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helpers ----------
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function currentUid() {
+      return request.auth.uid;
+    }
+
+    function memberPath(workspaceId) {
+      return /databases/$(database)/documents/workspaces/$(workspaceId)/members/$(currentUid());
+    }
+
+    function isMember(workspaceId) {
+      return signedIn() && exists(memberPath(workspaceId));
+    }
+
+    // Para consultas `list`, Firestore no puede evaluar exists() por documento.
+    // Usamos una lectura fija del workspace (su array memberIds).
+    function isMemberByWorkspace(workspaceId) {
+      return signedIn()
+        && currentUid() in get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.memberIds;
+    }
+
+    function isAdminByWorkspace(workspaceId) {
+      return isMemberByWorkspace(workspaceId)
+        && get(memberPath(workspaceId)).data.role in ['owner', 'admin'];
+    }
+
+    function roleIn(workspaceId) {
+      return get(memberPath(workspaceId)).data.role;
+    }
+
+    function isOwner(workspaceId) {
+      return isMember(workspaceId) && roleIn(workspaceId) == 'owner';
+    }
+
+    function isAdmin(workspaceId) {
+      return isMember(workspaceId) && roleIn(workspaceId) in ['owner', 'admin'];
+    }
+
+    function workspace(workspaceId) {
+      return get(/databases/$(database)/documents/workspaces/$(workspaceId)).data;
+    }
+
+    function inviteValid(workspaceId, code) {
+      let invite = get(/databases/$(database)/documents/invites/$(code)).data;
+      return invite.workspaceId == workspaceId
+        && invite.expiresAtMs > request.time.toMillis();
+    }
+
+    function channelData(workspaceId, channelId) {
+      return get(/databases/$(database)/documents/workspaces/$(workspaceId)/channels/$(channelId)).data;
+    }
+
+    function boardData(workspaceId, boardId) {
+      return get(/databases/$(database)/documents/workspaces/$(workspaceId)/boards/$(boardId)).data;
+    }
+
+    function taskData(workspaceId, boardId, taskId) {
+      return get(/databases/$(database)/documents/workspaces/$(workspaceId)/boards/$(boardId)/tasks/$(taskId)).data;
+    }
+
+    // Permite migrar un comentario conservando su autor original cuando el
+    // comentario de origen existe y el usuario pertenece a ambos espacios.
+    function migratedComment(commentId) {
+      let from = request.resource.data.migratedFrom;
+      return from is map
+        && from.commentId == commentId
+        && from.workspaceId is string
+        && from.boardId is string
+        && from.taskId is string
+        && isMember(from.workspaceId)
+        && exists(/databases/$(database)/documents/workspaces/$(from.workspaceId)/boards/$(from.boardId)/tasks/$(from.taskId)/comments/$(commentId))
+        && get(/databases/$(database)/documents/workspaces/$(from.workspaceId)/boards/$(from.boardId)/tasks/$(from.taskId)/comments/$(commentId)).data.authorId == request.resource.data.authorId;
+    }
+
+    function canAccessChannel(workspaceId, channelId) {
+      return isMember(workspaceId) && (
+        channelData(workspaceId, channelId).type == 'public'
+        || isAdmin(workspaceId)
+        || currentUid() in channelData(workspaceId, channelId).memberIds
+      );
+    }
+
+    function onlySelfMembershipChange() {
+      let before = resource.data.memberIds.toSet();
+      let after = request.resource.data.memberIds.toSet();
+      let added = after.difference(before);
+      let removed = before.difference(after);
+      return (added.size() == 0 || (added.size() == 1 && added.hasAny([currentUid()])))
+        && (removed.size() == 0 || (removed.size() == 1 && removed.hasAny([currentUid()])));
+    }
+
+    // ---------- Usuarios ----------
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && userId == currentUid();
+      allow update: if signedIn() && userId == currentUid();
+      allow delete: if false;
+
+      // Tokens FCM por dispositivo. Solo el dueño los gestiona.
+      match /devices/{deviceId} {
+        allow read, delete: if signedIn() && userId == currentUid();
+        allow create, update: if signedIn()
+          && userId == currentUid()
+          && request.resource.data.token is string
+          && request.resource.data.token.size() > 10
+          && request.resource.data.token.size() <= 4096
+          && request.resource.data.platform in ['android', 'ios']
+          && request.resource.data.enabled is bool
+          && request.resource.data.createdAt is string
+          && request.resource.data.updatedAt is string;
+      }
+    }
+
+    // ---------- Outbox de notificaciones ----------
+    // El cliente solo crea eventos pendientes; el Worker (service account) los procesa.
+    match /pushOutbox/{eventId} {
+      allow create: if signedIn()
+        && request.resource.data.createdBy == currentUid()
+        && request.resource.data.actorId == currentUid()
+        && request.resource.data.status == 'pending'
+        && request.resource.data.attempts == 0
+        && request.resource.data.kind in [
+          'message.created',
+          'task.created',
+          'task.updated',
+          'task.comment'
+        ]
+        && isMemberByWorkspace(request.resource.data.workspaceId);
+      allow read, update, delete: if false;
+    }
+
+    // ---------- Espacios de trabajo ----------
+    match /workspaces/{workspaceId} {
+      // `get` exige membresía; `list` se evalúa por documento y no puede usar
+      // exists() (rompe las consultas de Firestore).
+      allow get: if isMember(workspaceId);
+      allow list: if signedIn() && currentUid() in resource.data.memberIds;
+      allow create: if signedIn()
+        && request.resource.data.ownerId == currentUid()
+        && currentUid() in request.resource.data.memberIds
+        && request.resource.data.memberIds.size() == 1;
+      allow update: if isOwner(workspaceId)
+        || (isAdmin(workspaceId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'icon', 'description']))
+        || (isAdmin(workspaceId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds']))
+        || (signedIn()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])
+            && onlySelfMembershipChange());
+      allow delete: if isOwner(workspaceId);
+
+      match /members/{memberId} {
+        // Un invitado puede comprobar su propio documento antes de unirse
+        // (necesario para aceptar un enlace de forma idempotente).
+        allow get: if isMember(workspaceId) || memberId == currentUid();
+        allow list: if isMemberByWorkspace(workspaceId);
+        allow create: if signedIn() && (
+          (isAdmin(workspaceId)
+            && request.resource.data.role in ['admin', 'member'])
+          || (memberId == currentUid()
+            && request.resource.data.uid == currentUid()
+            && request.resource.data.role == 'owner'
+            && workspace(workspaceId).ownerId == currentUid())
+          || (memberId == currentUid()
+            && request.resource.data.uid == currentUid()
+            && request.resource.data.role == 'member'
+            && inviteValid(workspaceId, request.resource.data.inviteCode))
+        );
+        allow update: if (
+          isOwner(workspaceId)
+          || (isAdmin(workspaceId)
+              && resource.data.role != 'owner'
+              && request.resource.data.role in ['admin', 'member'])
+          || (memberId == currentUid()
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastActiveAt', 'displayName']))
+        );
+        allow delete: if isOwner(workspaceId)
+          || (isAdmin(workspaceId) && resource.data.role == 'member')
+          || (memberId == currentUid() && resource.data.role != 'owner');
+      }
+
+      // ---------- Canales ----------
+      match /channels/{channelId} {
+        allow get: if isMember(workspaceId) && (
+          resource.data.type == 'public'
+          || isAdmin(workspaceId)
+          || currentUid() in resource.data.memberIds
+        );
+        allow list: if isMemberByWorkspace(workspaceId) && (
+          resource.data.type == 'public'
+          || isAdminByWorkspace(workspaceId)
+          || currentUid() in resource.data.memberIds
+        );
+        allow create: if isMember(workspaceId)
+          && request.resource.data.createdBy == currentUid()
+          && (request.resource.data.type == 'public'
+              || currentUid() in request.resource.data.memberIds);
+        allow update: if (isAdmin(workspaceId)
+            || (isMember(workspaceId) && resource.data.createdBy == currentUid()))
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.type == resource.data.type
+          && request.resource.data.createdAt == resource.data.createdAt
+          && (request.resource.data.type == 'public'
+              || resource.data.createdBy in request.resource.data.memberIds);
+        allow delete: if isAdmin(workspaceId)
+          || (isMember(workspaceId) && resource.data.createdBy == currentUid());
+
+        match /messages/{messageId} {
+          allow get: if canAccessChannel(workspaceId, channelId);
+          allow list: if isMemberByWorkspace(workspaceId) && (
+            channelData(workspaceId, channelId).type == 'public'
+            || isAdminByWorkspace(workspaceId)
+            || currentUid() in channelData(workspaceId, channelId).memberIds
+          );
+          allow create: if canAccessChannel(workspaceId, channelId)
+            && request.resource.data.authorId == currentUid()
+            && request.resource.data.body is string
+            && request.resource.data.body.size() <= 8000;
+          allow update: if canAccessChannel(workspaceId, channelId)
+            && (
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions'])
+              || ((resource.data.authorId == currentUid() || isAdmin(workspaceId))
+                  && request.resource.data.authorId == resource.data.authorId
+                  && request.resource.data.createdAt == resource.data.createdAt)
+            );
+          allow delete: if canAccessChannel(workspaceId, channelId)
+            && (resource.data.authorId == currentUid() || isAdmin(workspaceId)
+                || channelData(workspaceId, channelId).createdBy == currentUid());
+        }
+
+        // «Escribiendo…» y última lectura: estado efímero por miembro.
+        match /typing/{uid} {
+          allow read: if canAccessChannel(workspaceId, channelId);
+          allow create, update: if canAccessChannel(workspaceId, channelId)
+            && uid == currentUid()
+            && request.resource.data.uid == currentUid();
+          allow delete: if canAccessChannel(workspaceId, channelId) && uid == currentUid();
+        }
+
+        match /reads/{uid} {
+          allow read: if canAccessChannel(workspaceId, channelId);
+          allow create, update: if canAccessChannel(workspaceId, channelId)
+            && uid == currentUid()
+            && request.resource.data.uid == currentUid();
+        }
+      }
+
+      // ---------- Tableros ----------
+      match /boards/{boardId} {
+        allow get: if isMember(workspaceId);
+        allow list: if isMemberByWorkspace(workspaceId);
+        allow create: if isMember(workspaceId)
+          && request.resource.data.createdBy == currentUid();
+        allow update: if isMember(workspaceId)
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isAdmin(workspaceId)
+          || (isMember(workspaceId) && resource.data.createdBy == currentUid());
+
+        match /tasks/{taskId} {
+          allow get: if isMember(workspaceId);
+          allow list: if isMemberByWorkspace(workspaceId);
+          allow create: if isMember(workspaceId)
+            && request.resource.data.createdBy == currentUid()
+            && request.resource.data.title is string
+            && request.resource.data.title.size() > 0
+            && request.resource.data.title.size() <= 160;
+          allow update: if isMember(workspaceId)
+            && request.resource.data.createdBy == resource.data.createdBy
+            && request.resource.data.createdAt == resource.data.createdAt
+            && request.resource.data.title is string
+            && request.resource.data.title.size() > 0
+            && request.resource.data.title.size() <= 160;
+          allow delete: if isAdmin(workspaceId)
+            || (isMember(workspaceId) && (resource.data.createdBy == currentUid()
+                || boardData(workspaceId, boardId).createdBy == currentUid()));
+
+          match /comments/{commentId} {
+            allow get: if isMember(workspaceId);
+            allow list: if isMemberByWorkspace(workspaceId);
+            allow create: if isMember(workspaceId)
+              && request.resource.data.authorId is string
+              && request.resource.data.body is string
+              && request.resource.data.body.size() > 0
+              && request.resource.data.body.size() <= 2000
+              && (
+                request.resource.data.authorId == currentUid()
+                || migratedComment(commentId)
+              )
+              && (
+                !('migratedFrom' in request.resource.data)
+                || migratedComment(commentId)
+              );
+            allow update: if isMember(workspaceId)
+              && (resource.data.authorId == currentUid() || isAdmin(workspaceId))
+              && request.resource.data.authorId == resource.data.authorId
+              && request.resource.data.createdAt == resource.data.createdAt
+              && request.resource.data.body is string
+              && request.resource.data.body.size() > 0
+              && request.resource.data.body.size() <= 2000;
+            allow delete: if isMember(workspaceId)
+              && (resource.data.authorId == currentUid() || isAdmin(workspaceId)
+                  || taskData(workspaceId, boardId, taskId).createdBy == currentUid()
+                  || boardData(workspaceId, boardId).createdBy == currentUid());
+          }
+        }
+      }
+
+      // ---------- Páginas ----------
+      match /pages/{pageId} {
+        allow get: if isMember(workspaceId);
+        allow list: if isMemberByWorkspace(workspaceId);
+        allow create: if isMember(workspaceId)
+          && request.resource.data.createdBy == currentUid()
+          && request.resource.data.title is string
+          && request.resource.data.title.size() <= 160;
+        allow update: if isMember(workspaceId)
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.title is string
+          && request.resource.data.title.size() <= 160
+          && (request.resource.data.archived == resource.data.archived
+              || resource.data.createdBy == currentUid()
+              || isAdmin(workspaceId));
+        allow delete: if isAdmin(workspaceId)
+          || (isMember(workspaceId) && resource.data.createdBy == currentUid());
+      }
+
+      // ---------- Carpetas ----------
+      match /folders/{folderId} {
+        allow get: if isMember(workspaceId);
+        allow list: if isMemberByWorkspace(workspaceId);
+        allow create: if isMember(workspaceId)
+          && request.resource.data.createdBy == currentUid()
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 60;
+        allow update: if isMember(workspaceId)
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.createdAt == resource.data.createdAt
+          && (resource.data.createdBy == currentUid() || isAdmin(workspaceId));
+        allow delete: if isMember(workspaceId)
+          && (resource.data.createdBy == currentUid() || isAdmin(workspaceId));
+      }
+
+      // ---------- Archivos (metadatos) ----------
+      match /files/{fileId} {
+        allow get: if isMember(workspaceId);
+        allow list: if isMemberByWorkspace(workspaceId);
+        allow create: if isMember(workspaceId)
+          && request.resource.data.uploadedBy == currentUid()
+          && request.resource.data.size is number
+          && request.resource.data.size > 0
+          && request.resource.data.size <= 25 * 1024 * 1024
+          && request.resource.data.url is string
+          && request.resource.data.url.size() <= 1000000;
+        allow update: if isMember(workspaceId)
+          && request.resource.data.uploadedBy == resource.data.uploadedBy
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.get('backend', 'firestore') == resource.data.get('backend', 'firestore')
+          && request.resource.data.size is number
+          && request.resource.data.size > 0
+          && request.resource.data.size <= 25 * 1024 * 1024
+          && request.resource.data.url is string
+          && request.resource.data.url.size() <= 1000000
+          && (resource.data.uploadedBy == currentUid() || isAdmin(workspaceId));
+        allow delete: if isAdmin(workspaceId)
+          || (isMember(workspaceId) && resource.data.uploadedBy == currentUid());
+
+        // Contenido del modo gratuito, cargado bajo demanda.
+        match /data/{documentId} {
+          allow get: if isMember(workspaceId);
+          allow list: if isMemberByWorkspace(workspaceId);
+          allow create: if isMember(workspaceId)
+            && request.resource.data.data is string
+            && request.resource.data.data.size() <= 1000000;
+          allow update: if isMember(workspaceId)
+            && request.resource.data.data is string
+            && request.resource.data.data.size() <= 1000000
+            && (get(/databases/$(database)/documents/workspaces/$(workspaceId)/files/$(fileId)).data.uploadedBy == currentUid()
+                || isAdmin(workspaceId));
+          allow delete: if isMember(workspaceId)
+            && (get(/databases/$(database)/documents/workspaces/$(workspaceId)/files/$(fileId)).data.uploadedBy == currentUid()
+                || isAdmin(workspaceId));
+        }
+      }
+    }
+
+    // ---------- Tokens MCP ----------
+    match /mcpTokens/{tokenId} {
+      allow get, list: if signedIn() && resource.data.uid == currentUid();
+      allow create: if signedIn()
+        && request.resource.data.uid == currentUid()
+        && request.resource.data.label is string
+        && request.resource.data.label.size() > 0
+        && request.resource.data.label.size() <= 60
+        && request.resource.data.scopes is list
+        && request.resource.data.scopes.size() > 0
+        && request.resource.data.scopes.size() <= 2
+        && request.resource.data.createdAt is string
+        && request.resource.data.lastUsedAt == null
+        && request.resource.data.revokedAt == null;
+      allow update: if signedIn()
+        && resource.data.uid == currentUid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['revokedAt'])
+        && request.resource.data.revokedAt is string;
+      allow delete: if signedIn() && resource.data.uid == currentUid();
+    }
+
+    // ---------- Invitaciones ----------
+    match /invites/{code} {
+      // El código es el secreto: conocerlo permite leer la invitación (también sin sesión).
+      allow get: if true;
+      allow list: if false;
+      allow create: if signedIn()
+        && isAdmin(request.resource.data.workspaceId)
+        && request.resource.data.createdBy == currentUid()
+        && request.resource.data.expiresAtMs > request.time.toMillis();
+      allow update, delete: if signedIn()
+        && isAdmin(resource.data.workspaceId);
+    }
+
+    // ---------- Denegar todo lo demás ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

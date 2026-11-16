@@ -1,0 +1,16 @@
+node_modules
+dist
+dist-mobile
+coverage
+graphify-out
+.git
+.github
+.opencode
+docs
+android
+*.apk
+*.jks
+*.keystore
+.env
+.env.*
+!.env.example

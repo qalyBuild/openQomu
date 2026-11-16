@@ -1,0 +1,20 @@
+{
+  "name": "openqomu-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-12",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    // Ajusta estos valores a tu despliegue antes de publicar el Worker.
+    "FIREBASE_PROJECT_ID": "",
+    // URL pública del propio Worker, con la ruta /mcp.
+    "MCP_SERVER_URL": "",
+    // Hosts que puede usar el servidor MCP, separados por comas.
+    "MCP_ALLOWED_HOSTS": ""
+  },
+  "dev": {
+    "port": 8788
+  }
+}

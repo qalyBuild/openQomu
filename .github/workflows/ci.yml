@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: App (lint, tipos, tests y build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run skill:check
+      - run: npm run check:private
+      - run: npm run check:docs
+      # Falla ante licencias incompatibles con AGPL-3.0.
+      - run: npx license-checker --summary --failOn "GPL-2.0-only;GPL-2.0;SSPL-1.0;BUSL-1.1;CC-BY-NC-4.0"
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:coverage
+      - run: npm run build
+
+  mcp-worker:
+    name: MCP worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mcp-worker/package-lock.json
+
+      - run: npm ci
+        working-directory: mcp-worker
+      - run: npm run typecheck
+        working-directory: mcp-worker
+      - run: npm test
+        working-directory: mcp-worker
+
+  push-worker:
+    name: Push worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: push-worker/package-lock.json
+
+      - run: npm ci
+        working-directory: push-worker
+      - run: npm run typecheck
+        working-directory: push-worker
+      - run: npm test
+        working-directory: push-worker
+
+  files-worker:
+    name: Files worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: files-worker/package-lock.json
+
+      - run: npm ci
+        working-directory: files-worker
+      - run: npm run typecheck
+        working-directory: files-worker
+      - run: npm test
+        working-directory: files-worker
+
+  firestore-rules:
+    name: Reglas de Firestore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - run: npm ci
+      - run: npm run test:rules

@@ -1,0 +1,6 @@
+# Copia a `.dev.vars` para `npm run dev` en mcp-worker.
+# Cuenta de servicio con roles/datastore.user (una sola línea).
+FIREBASE_SERVICE_ACCOUNT=
+FIREBASE_PROJECT_ID=
+MCP_SERVER_URL=http://localhost:8788/mcp
+MCP_ALLOWED_HOSTS=localhost,127.0.0.1

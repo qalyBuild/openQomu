@@ -1,0 +1,23 @@
+{
+  "name": "openqomu-push",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-12",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    // Ajusta estos valores a tu despliegue antes de publicar el Worker.
+    "FIREBASE_PROJECT_ID": "",
+    "FCM_PROJECT_ID": "",
+    // Orígenes permitidos, separados por comas.
+    "PUSH_ALLOWED_ORIGINS": ""
+  },
+  "triggers": {
+    // Procesa la cola de notificaciones y purga los mensajes eliminados.
+    "crons": ["* * * * *"]
+  },
+  "dev": {
+    "port": 8789
+  }
+}

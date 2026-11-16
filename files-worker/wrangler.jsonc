@@ -1,0 +1,21 @@
+{
+  "name": "openqomu-files",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-12",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    // Ajusta estos valores a tu despliegue antes de publicar el Worker.
+    "FIREBASE_PROJECT_ID": "",
+    "S3_ENDPOINT": "",
+    "S3_REGION": "",
+    "S3_BUCKET": "",
+    // Orígenes permitidos, separados por comas. Incluye tu dominio y localhost en desarrollo.
+    "FILES_ALLOWED_ORIGINS": ""
+  },
+  "dev": {
+    "port": 8791
+  }
+}

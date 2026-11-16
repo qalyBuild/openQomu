@@ -1,0 +1,50 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include tokens, service accounts, credentials or personal data.
+        Security issues must be reported privately: see SECURITY.md.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened
+      description: Describe the actual behaviour and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v0.1.0 or commit hash
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Backend
+      options:
+        - Local mode
+        - Firebase
+        - Firebase + Workers
+        - Android app
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Redact any token, project ID or personal data.
+      render: shell

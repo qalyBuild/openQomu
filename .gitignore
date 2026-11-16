@@ -1,0 +1,63 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Entorno local
+.env.local
+.env.*.local
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler/
+.claude/settings.local.json
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+
+# Herramientas locales de desarrollo
+.claude/worktrees/
+.opencode/
+graphify-out/
+
+# Android local
+android/keystore.properties
+android/local.properties
+android/app/google-services.json
+public/.well-known/assetlinks.json
+*.jks
+*.keystore
+
+# APK generada
+dist-mobile/
+
+# mez: salida generada del grafo
+graphify-out/
