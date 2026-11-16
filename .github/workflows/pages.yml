@@ -40,7 +40,7 @@ jobs:
           VITE_PUBLIC_APP_URL: ${{ vars.VITE_PUBLIC_APP_URL }}
           VITE_APK_URL: ${{ vars.VITE_APK_URL }}
       - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
