@@ -98,4 +98,5 @@ jobs:
       - name: Publicar artefacto
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: gh release upload "$GITHUB_REF_NAME" openqomu.apk --clobber
