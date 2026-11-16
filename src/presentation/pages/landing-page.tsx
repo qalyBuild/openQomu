@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
@@ -72,6 +72,16 @@ export function LandingPage() {
   useEffect(() => {
     if (status === 'authenticated') navigate(from ?? '/app', { replace: true })
   }, [from, navigate, status])
+
+  // `?demo=1` abre la demo directamente: enlaces externos sin pasar por la landing.
+  const autoDemoRequested = new URLSearchParams(location.search).get('demo') === '1'
+  const demoStarted = useRef(false)
+  useEffect(() => {
+    if (!autoDemoRequested || !isDemo || status !== 'anonymous' || pending) return
+    if (demoStarted.current) return
+    demoStarted.current = true
+    void signInWithGoogle()
+  }, [autoDemoRequested, isDemo, pending, signInWithGoogle, status])
 
   return (
     <div className="safe-area-top relative min-h-svh overflow-x-hidden bg-background">

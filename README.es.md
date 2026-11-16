@@ -33,7 +33,7 @@ npm ci
 npm run dev
 ```
 
-Abre `http://localhost:5173` y pulsa **Entrar a la demo**. No hace falta configurar nada: se crea un espacio de demostración con canales, tableros, páginas y archivos de ejemplo en tu navegador. Los datos no salen del dispositivo.
+Abre `http://localhost:5173` y pulsa **Entrar a la demo**, o entra directo en `http://localhost:5173/?demo=1`. No hace falta configurar nada: se crea un espacio de demostración con canales, tableros, páginas y archivos de ejemplo en tu navegador. Los datos no salen del dispositivo.
 
 `npm run setup` crea `.env.local` a partir de `.env.example` y valida la configuración.
 

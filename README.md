@@ -33,7 +33,7 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:5173` and choose **Entrar a la demo**. No configuration is needed: a demo workspace with sample channels, boards, pages and files is created in your browser. Data never leaves the device.
+Open `http://localhost:5173` and choose **Entrar a la demo**, or go straight to `http://localhost:5173/?demo=1`. No configuration is needed: a demo workspace with sample channels, boards, pages and files is created in your browser. Data never leaves the device.
 
 `npm run setup` creates `.env.local` from `.env.example` and validates the configuration.
 
