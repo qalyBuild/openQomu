@@ -127,7 +127,7 @@ export function App({ container }: { container: AppContainer }) {
           <AuthProvider>
             <WorkspacesProvider>
               <TooltipProvider delayDuration={200}>
-                <BrowserRouter>
+                <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '') || '/'}>
                   <MobileRuntime />
                   <Suspense fallback={<LoadingScreen />}>
                     <Routes>

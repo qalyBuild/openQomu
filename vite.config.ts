@@ -4,7 +4,9 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
+// `VITE_BASE_PATH` permite publicar en un subdirectorio (GitHub Pages, por ejemplo).
 export default defineConfig({
+  base: process.env.VITE_BASE_PATH || '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
