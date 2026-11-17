@@ -4,7 +4,7 @@ import { FolderOpen, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import type { FileFolder } from '@/domain/entities/chat'
-import { isFolderEmpty } from '@/domain/services/file-folder-service'
+import { descendantFolderIds } from '@/domain/services/file-folder-service'
 import { useContainer } from '@/app/auth-provider'
 import { useWorkspaceData } from '@/app/workspace-data-provider'
 import { ConfirmDialog } from '@/presentation/components/common/confirm-dialog'
@@ -77,13 +77,6 @@ export function FilesExplorer({ onNavigate }: { onNavigate?: () => void }) {
     onNavigate?.()
   }
 
-  const folderIsEmpty = (folder: FileFolder) =>
-    isFolderEmpty(
-      folder.id,
-      folders,
-      files.map((file) => file.folderId),
-    )
-
   const saveFolder = async (name: string) => {
     if (!folderDialog) return
     try {
@@ -114,13 +107,17 @@ export function FilesExplorer({ onNavigate }: { onNavigate?: () => void }) {
 
   const deleteFolder = async () => {
     if (!deleteTarget) return
-    if (!folderIsEmpty(deleteTarget)) {
-      toast.error('Mueve o elimina el contenido antes de borrar la carpeta.')
-      return
-    }
+    const ids = [deleteTarget.id, ...descendantFolderIds(folders, deleteTarget.id)]
+    const at = new Date().toISOString()
     try {
-      await container.fileFolders.remove(workspace.id, deleteTarget.id)
-      if (deleteTarget.id === currentFolderId) {
+      const inside = files.filter((file) => file.folderId && ids.includes(file.folderId))
+      for (const file of inside) {
+        await container.files.update(workspace.id, file.id, { trashedAt: at })
+      }
+      for (const id of ids.reverse()) {
+        await container.fileFolders.remove(workspace.id, id)
+      }
+      if (currentFolderId && ids.includes(currentFolderId)) {
         mutate((next) => {
           next.delete('folder')
           next.delete('file')
@@ -189,7 +186,6 @@ export function FilesExplorer({ onNavigate }: { onNavigate?: () => void }) {
         onDelete={setDeleteTarget}
         onDownload={(folder) => void downloadFolder(folder)}
         canManage={(folder) => folder.createdBy === uid || can('file.deleteAny')}
-        isEmpty={folderIsEmpty}
         onDropFile={(fileId, folderId) => void dropFileIntoFolder(fileId, folderId)}
         showHeader={false}
       />
@@ -235,7 +231,7 @@ export function FilesExplorer({ onNavigate }: { onNavigate?: () => void }) {
         open={Boolean(deleteTarget)}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title={`¿Eliminar la carpeta “${deleteTarget?.name ?? ''}”?`}
-        description="La carpeta debe estar vacía. Esta acción no se puede deshacer."
+        description="Su contenido se moverá a la papelera. Las carpetas se eliminarán definitivamente."
         confirmLabel="Eliminar carpeta"
         onConfirm={deleteFolder}
       />

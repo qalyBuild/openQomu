@@ -2,6 +2,7 @@ import { verifyFirebaseIdToken } from './auth'
 import type { Env } from './env'
 import { FirebaseFcmSender } from './fcm'
 import { processEvent, processPending } from './processor'
+import { purgeDeletedMessages, purgeExpiredInvites } from './purge'
 import { checkRateLimit } from './rate-limit'
 import { FirestoreStore } from './store'
 
@@ -101,6 +102,16 @@ export default {
       processPending(store, fcm)
         .then((counts) => console.log('[openqomu-push] cron', counts))
         .catch((error) => console.error('[openqomu-push] cron', error)),
+    )
+    ctx.waitUntil(
+      purgeDeletedMessages(env)
+        .then((count) => console.log('[openqomu-push] purga mensajes', count))
+        .catch((error) => console.error('[openqomu-push] purga mensajes', error)),
+    )
+    ctx.waitUntil(
+      purgeExpiredInvites(env)
+        .then((count) => console.log('[openqomu-push] purga invitaciones', count))
+        .catch((error) => console.error('[openqomu-push] purga invitaciones', error)),
     )
   },
 }

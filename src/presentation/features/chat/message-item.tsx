@@ -23,7 +23,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { FileMeta, Message, MessageReadState } from '@/domain/entities/chat'
 import type { Member, Role } from '@/domain/entities/identity'
-import { excerpt, readReceipt } from '@/domain/services/message-service'
+import { excerpt, isDeletedMessageExpired, readReceipt } from '@/domain/services/message-service'
 import { formatDate, formatRelative, formatTime, dayKey } from '@/lib/date'
 import { canDeleteMessage } from '@/domain/services/permission-service'
 import { useContainer } from '@/app/auth-provider'
@@ -210,6 +210,7 @@ export function MessageItem({
   const reactions = Object.entries(message.reactions ?? {}).filter(([, uids]) => uids.length > 0)
   const canDelete = canDeleteMessage(role, message, uid)
   const receipt = readReceipt(message, uid, reads, recipientIds)
+  const mine = message.authorId === uid
 
   const author = members.find((member) => member.uid === message.authorId)
   const online = author?.lastActiveAt
@@ -273,9 +274,10 @@ export function MessageItem({
   }
 
   if (message.deletedAt) {
+    if (isDeletedMessageExpired(message)) return null
     return (
       <div className="px-2 py-1 ps-12 text-xs italic text-muted-foreground">
-        Este mensaje se eliminó.
+        Se eliminó este mensaje: {message.body}
       </div>
     )
   }
@@ -288,7 +290,7 @@ export function MessageItem({
         grouped ? 'py-0.5' : 'py-2',
       )}
     >
-      <div className="flex gap-3">
+      <div className={cn('flex gap-3', mine && 'flex-row-reverse')}>
         <div className="w-9 shrink-0">
           {!grouped ? (
             <UserAvatar
@@ -298,45 +300,37 @@ export function MessageItem({
               online={online}
             />
           ) : (
-            <span className="mt-1 flex flex-col items-end gap-0.5 pe-1 text-[0.6rem] text-muted-foreground/60">
-              <span>{formatTime(message.createdAt)}</span>
-              {receipt && (
-                <ReadStatus
-                  state={receipt.state}
-                  readers={receipt.readers}
-                  members={members}
-                />
-              )}
-            </span>
+            !mine && (
+              <span className="mt-1 flex flex-col items-end gap-0.5 pe-1 text-[0.6rem] text-muted-foreground/60">
+                <span>{formatTime(message.createdAt)}</span>
+              </span>
+            )
           )}
         </div>
-        <div className="min-w-0 flex-1">
+        <div
+          className={cn(
+            'flex min-w-0 max-w-[85%] flex-col gap-1',
+            mine ? 'items-end' : 'items-start',
+          )}
+        >
           {!grouped && (
-            <div className="flex items-baseline gap-2">
+            <div className={cn('flex items-baseline gap-2', mine && 'flex-row-reverse')}>
               <span className="text-sm font-semibold tracking-tight">{message.authorName}</span>
-              {message.authorId === uid && (
-                <span className="rounded bg-primary/10 px-1 py-0.5 text-[0.55rem] font-medium text-primary">
-                  tú
-                </span>
-              )}
-              <span className="text-[0.65rem] text-muted-foreground">
-                {formatTime(message.createdAt)}
-              </span>
-              {message.editedAt && (
-                <span className="text-[0.6rem] text-muted-foreground/70">(editado)</span>
-              )}
-              {receipt && (
-                <ReadStatus
-                  state={receipt.state}
-                  readers={receipt.readers}
-                  members={members}
-                />
+              {!mine && (
+                <>
+                  <span className="text-[0.65rem] text-muted-foreground">
+                    {formatTime(message.createdAt)}
+                  </span>
+                  {message.editedAt && (
+                    <span className="text-[0.6rem] text-muted-foreground/70">(editado)</span>
+                  )}
+                </>
               )}
             </div>
           )}
 
           {parent && (
-            <div className="mb-1 flex items-center gap-1.5 text-[0.68rem] text-muted-foreground">
+            <div className="flex max-w-full items-center gap-1.5 text-[0.68rem] text-muted-foreground">
               <Reply className="size-3 shrink-0" />
               <span className="truncate">
                 <strong className="font-medium text-foreground/80">{parent.authorName}</strong> ·{' '}
@@ -346,15 +340,36 @@ export function MessageItem({
           )}
 
           {message.body && (
-            <p className="whitespace-pre-wrap break-words text-[0.875rem] leading-relaxed text-foreground/90">
+            <p
+              className={cn(
+                'whitespace-pre-wrap wrap-anywhere rounded-2xl px-3 py-2 text-[0.875rem] leading-relaxed',
+                mine ? 'bg-primary/10 text-foreground' : 'bg-muted/50 text-foreground/90',
+              )}
+            >
               {renderBody(message.body)}
             </p>
           )}
 
           <AttachmentGrid files={attachments} />
 
+          {mine && (
+            <div className="flex items-center gap-1 px-1 text-[0.6rem] text-muted-foreground">
+              <span>{formatTime(message.createdAt)}</span>
+              {message.editedAt && (
+                <span className="text-muted-foreground/70">· editado</span>
+              )}
+              {receipt && (
+                <ReadStatus
+                  state={receipt.state}
+                  readers={receipt.readers}
+                  members={members}
+                />
+              )}
+            </div>
+          )}
+
           {reactions.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1">
               {reactions.map(([emoji, uids]) => (
                 <button
                   key={emoji}
@@ -390,7 +405,7 @@ export function MessageItem({
                   setMobileActions(false)
                   onOpenThread?.(message)
                 }}
-              className="mt-1 flex items-center gap-1 text-[0.68rem] font-medium text-primary hover:underline"
+              className="flex items-center gap-1 text-[0.68rem] font-medium text-primary hover:underline"
             >
               <MessageSquare className="size-3" />
               {replies.length} {replies.length === 1 ? 'respuesta' : 'respuestas'}
@@ -404,14 +419,18 @@ export function MessageItem({
         onClick={() => setMobileActions((value) => !value)}
         aria-label="Acciones del mensaje"
         aria-expanded={mobileActions}
-        className="absolute end-0 top-0 z-10 grid size-6 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground md:hidden"
+        className={cn(
+          'absolute top-0 z-10 grid size-6 place-items-center rounded-md text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground md:hidden',
+          mine ? 'start-0' : 'end-0',
+        )}
       >
         <MoreHorizontal className="size-4" />
       </button>
 
       <div
         className={cn(
-          'chat-message-actions absolute end-0 top-7 z-10 flex items-center gap-0.5 rounded-lg border bg-popover p-0.5 shadow-md md:-top-3 md:end-2',
+          'chat-message-actions absolute top-7 z-10 flex items-center gap-0.5 rounded-lg border bg-popover p-0.5 shadow-md md:-top-3',
+          mine ? 'start-0 md:start-2' : 'end-0 md:end-2',
           mobileActions && 'is-open',
         )}
       >
@@ -542,7 +561,7 @@ export function MessageItem({
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         title="¿Eliminar este mensaje?"
-        description="El contenido se borrará para todos los miembros del canal."
+        description="Se mostrará como eliminado una hora y después desaparecerá para todos."
         confirmLabel="Eliminar mensaje"
         onConfirm={async () => {
           try {
@@ -557,8 +576,19 @@ export function MessageItem({
   )
 }
 
-export function DaySeparator({ iso }: { iso: string }) {
-  const today = dayKey(new Date())
+export function NewMessagesDivider() {
+  return (
+    <div className="flex items-center gap-3 py-2">
+      <div className="h-px flex-1 bg-primary/40" />
+      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider text-primary">
+        Nuevo
+      </span>
+      <div className="h-px flex-1 bg-primary/40" />
+    </div>
+  )
+}
+
+export function DaySeparator({ iso }: { iso: string }) {  const today = dayKey(new Date())
   const yesterday = dayKey(new Date(Date.now() - 86_400_000))
   const key = dayKey(iso)
   const label =

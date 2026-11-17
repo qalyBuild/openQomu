@@ -200,6 +200,92 @@ export async function queryEquals<T = Record<string, unknown>>(
     }))
 }
 
+/** Consulta de grupo de colecciones con un único filtro de rango. */
+export async function queryCollectionGroup<T = Record<string, unknown>>(
+  env: Env,
+  collectionId: string,
+  fieldPath: string,
+  op: 'LESS_THAN' | 'GREATER_THAN',
+  value: string,
+  limit = 200,
+): Promise<Array<StoredDocument<T> & { path: string }>> {
+  const response = await firestoreFetch(env, '/:runQuery', {
+    method: 'POST',
+    body: JSON.stringify({
+      parent: documentsBase(env),
+      structuredQuery: {
+        from: [{ collectionId, allDescendants: true }],
+        where: {
+          fieldFilter: {
+            field: { fieldPath },
+            op,
+            value: encodeValue(value),
+          },
+        },
+        limit,
+      },
+    }),
+  })
+  await expectOk(response, 'collection group query')
+  const rows = (await response.json()) as Array<{ document?: FirestoreDocument }>
+  return rows
+    .filter((row) => row.document)
+    .map((row) => ({
+      id: idFromName(row.document?.name),
+      data: decodeFields(row.document?.fields) as T,
+      updateTime: row.document?.updateTime,
+      path: pathFromName(env, row.document?.name),
+    }))
+}
+
+/** Consulta de una colección de nivel raíz con un único filtro de rango. */
+export async function queryCollectionRange<T = Record<string, unknown>>(
+  env: Env,
+  collectionId: string,
+  fieldPath: string,
+  op: 'LESS_THAN' | 'GREATER_THAN',
+  value: unknown,
+  limit = 200,
+): Promise<Array<StoredDocument<T> & { path: string }>> {
+  const response = await firestoreFetch(env, '/:runQuery', {
+    method: 'POST',
+    body: JSON.stringify({
+      parent: documentsBase(env),
+      structuredQuery: {
+        from: [{ collectionId }],
+        where: {
+          fieldFilter: {
+            field: { fieldPath },
+            op,
+            value: encodeValue(value),
+          },
+        },
+        limit,
+      },
+    }),
+  })
+  await expectOk(response, 'query')
+  const rows = (await response.json()) as Array<{ document?: FirestoreDocument }>
+  return rows
+    .filter((row) => row.document)
+    .map((row) => ({
+      id: idFromName(row.document?.name),
+      data: decodeFields(row.document?.fields) as T,
+      updateTime: row.document?.updateTime,
+      path: pathFromName(env, row.document?.name),
+    }))
+}
+
+function pathFromName(env: Env, name: string | undefined): string {
+  if (!name) return ''
+  const prefix = `${documentsBase(env)}/`
+  return name
+    .slice(prefix.length)
+    .split('/')
+    .map((segment) => decodeURIComponent(segment))
+    .join('/')
+}
+
 export async function updateDocument(
   env: Env,
   path: string,

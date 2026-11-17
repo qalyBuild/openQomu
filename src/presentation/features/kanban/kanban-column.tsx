@@ -50,9 +50,10 @@ export function KanbanColumn({
 
   return (
     <div
+      ref={setNodeRef}
       data-column-id={column.id}
       className={cn(
-        'flex h-full w-[290px] shrink-0 flex-col rounded-2xl border bg-muted/30 transition-colors',
+        'flex h-full min-w-0 flex-col rounded-2xl border bg-muted/30 transition-colors',
         isOver && 'border-primary/40 bg-primary/5',
       )}
     >
@@ -86,10 +87,7 @@ export function KanbanColumn({
         </div>
       </div>
 
-      <div
-        ref={setNodeRef}
-        className="scrollbar-thin min-h-0 flex-1 space-y-2 overflow-y-auto px-2 pb-2"
-      >
+      <div className="scrollbar-thin min-h-0 flex-1 space-y-2 overflow-y-auto px-2 pb-2">
         <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
           {groups.map((group) => (
             <div key={group.priority} className="space-y-2">

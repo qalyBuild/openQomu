@@ -94,8 +94,6 @@ export class DemoMessageRepository implements MessageRepository {
     this.store.commit((draft) => {
       const target = draft.messages[messageId]
       if (!target) return
-      target.body = ''
-      target.attachmentIds = []
       target.reactions = {}
       target.deletedAt = new Date().toISOString()
     })

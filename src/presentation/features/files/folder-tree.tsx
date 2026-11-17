@@ -53,7 +53,6 @@ function FolderRow({
   onDelete,
   onDownload,
   canManage,
-  isEmpty,
   onDropFile,
 }: {
   node: FolderNode
@@ -66,7 +65,6 @@ function FolderRow({
   onDelete: (folder: FileFolder) => void
   onDownload: (folder: FileFolder) => void
   canManage: (folder: FileFolder) => boolean
-  isEmpty: (folder: FileFolder) => boolean
   onDropFile: (fileId: string, folderId: string) => void
 }) {
   const activeInside = containsFolder(node, activeId)
@@ -74,7 +72,6 @@ function FolderRow({
   const [dropActive, setDropActive] = useState(false)
   const totalCount = countTreeFiles(node, files)
   const active = activeId === node.id
-  const empty = isEmpty(node)
 
   // Como en VS Code, la ruta hacia la carpeta activa se expande automáticamente.
   useEffect(() => {
@@ -159,12 +156,7 @@ function FolderRow({
                   <Pencil className="size-4" /> Renombrar
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant="destructive"
-                  disabled={!empty}
-                  title={empty ? undefined : 'Mueve o elimina su contenido para poder borrarla'}
-                  onClick={() => onDelete(node)}
-                >
+                <DropdownMenuItem variant="destructive" onClick={() => onDelete(node)}>
                   <Trash2 className="size-4" /> Eliminar carpeta
                 </DropdownMenuItem>
               </>
@@ -187,7 +179,6 @@ function FolderRow({
               onDelete={onDelete}
               onDownload={onDownload}
               canManage={canManage}
-              isEmpty={isEmpty}
               onDropFile={onDropFile}
             />
           ))}
@@ -209,7 +200,6 @@ export function FolderTree({
   onDelete,
   onDownload,
   canManage,
-  isEmpty,
   onDropFile,
   showHeader = true,
 }: {
@@ -224,7 +214,6 @@ export function FolderTree({
   onDelete: (folder: FileFolder) => void
   onDownload: (folder: FileFolder) => void
   canManage: (folder: FileFolder) => boolean
-  isEmpty: (folder: FileFolder) => boolean
   onDropFile: (fileId: string, folderId: string | null) => void
   showHeader?: boolean
 }) {
@@ -292,7 +281,6 @@ export function FolderTree({
           onDelete={onDelete}
           onDownload={onDownload}
           canManage={canManage}
-          isEmpty={isEmpty}
           onDropFile={onDropFile}
         />
       ))}

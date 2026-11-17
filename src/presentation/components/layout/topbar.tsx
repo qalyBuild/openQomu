@@ -17,9 +17,10 @@ function useBreadcrumb() {
   const segments = pathname.split('/').filter(Boolean)
   const section = segments[2] ?? 'dashboard'
   let current = ''
+  let channel = null
   if (section === 'c') {
-    const channel = channels.find((item) => item.id === segments[3])
-    current = channel ? `#${channel.name}` : 'Canal'
+    channel = channels.find((item) => item.id === segments[3]) ?? null
+    current = channel ? `${channel.type === 'private' ? '🔒' : '#'}${channel.name}` : 'Canal'
   } else if (section === 'boards') {
     const board = boards.find((item) => item.id === segments[3])
     current = board?.name ?? 'Tableros'
@@ -30,7 +31,7 @@ function useBreadcrumb() {
   else if (section === 'members') current = 'Miembros'
   else if (section === 'settings') current = 'Ajustes'
   else current = 'Resumen'
-  return { workspace, current, section }
+  return { workspace, current, section, channel }
 }
 
 export function Topbar({
@@ -40,13 +41,13 @@ export function Topbar({
   onOpenSearch: () => void
   onOpenMobileNav: () => void
 }) {
-  const { workspace, current, section } = useBreadcrumb()
+  const { workspace, current, section, channel } = useBreadcrumb()
   const { can } = useWorkspaceData()
   const container = useContainer()
   const [inviteOpen, setInviteOpen] = useState(false)
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/70 bg-background/80 px-3 backdrop-blur-xl sm:px-5">
+    <header className="relative flex h-14 shrink-0 items-center gap-2 border-b border-border/70 bg-background/80 px-3 backdrop-blur-xl sm:px-5">
       <Button
         variant="ghost"
         size="icon"
@@ -70,7 +71,14 @@ export function Topbar({
         </span>
       </div>
 
+      {channel?.description && (
+        <span className="pointer-events-none absolute left-1/2 hidden w-[38%] -translate-x-1/2 truncate text-center text-xs text-muted-foreground md:block">
+          {channel.description}
+        </span>
+      )}
+
       <div className="ms-auto flex items-center gap-1.5">
+        {section === 'c' && <div id="chat-topbar-slot" className="flex items-center gap-1.5" />}
         {container.mode === 'demo' && (
           <Tooltip>
             <TooltipTrigger asChild>

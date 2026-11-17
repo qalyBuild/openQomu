@@ -7,8 +7,10 @@ import {
   MouseSensor,
   TouchSensor,
   closestCorners,
+  pointerWithin,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
@@ -73,7 +75,26 @@ import { LabelManagerDialog } from '@/presentation/features/kanban/label-manager
 import { TaskDetailSheet } from '@/presentation/features/kanban/task-detail-sheet'
 import { ColumnManagerDialog } from '@/presentation/features/kanban/column-manager-dialog'
 import { isRecentlyActive } from '@/lib/presence'
-import { cn } from '@/lib/utils'
+
+const collisionDetection: CollisionDetection = (args) => {
+  // Con `closestCorners` las columnas son cajas tan grandes que sus esquinas
+  // quedan más lejos que las tarjetas vecinas: siempre ganaba una tarjeta de
+  // otra columna. Manda el puntero; sobre una tarjeta, ella decide la posición.
+  const hits = pointerWithin(args)
+  if (hits.length > 0) {
+    const overTask = hits.find(
+      (hit) =>
+        args.droppableContainers.find((container) => container.id === hit.id)?.data.current
+          ?.type === 'task',
+    )
+    return overTask ? [overTask] : hits
+  }
+  // Sin puntero (teclado) o en el hueco entre columnas: la columna más cercana.
+  const columns = args.droppableContainers.filter(
+    (container) => container.data.current?.type === 'column',
+  )
+  return closestCorners({ ...args, droppableContainers: columns })
+}
 
 export function BoardPage() {
   const { boardId } = useParams()
@@ -89,6 +110,7 @@ export function BoardPage() {
   const [label, setLabel] = useState<string>('all')
   const [mine, setMine] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [activeWidth, setActiveWidth] = useState(290)
   const [openTaskId, setOpenTaskId] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [createColumnId, setCreateColumnId] = useState<string>('')
@@ -214,6 +236,11 @@ export function BoardPage() {
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(String(event.active.id))
+    const dragged = tasks.find((task) => task.id === String(event.active.id))
+    const column = boardScrollRef.current?.querySelector<HTMLElement>(
+      `[data-column-id="${dragged?.columnId}"]`,
+    )
+    if (column) setActiveWidth(column.getBoundingClientRect().width)
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -264,24 +291,91 @@ export function BoardPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="shrink-0 border-b border-border/70 px-4 py-3 sm:px-5">
-        <div className="flex flex-wrap items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="hidden size-8 place-items-center rounded-lg border bg-primary/5 sm:grid">
-                <KanbanSquare className="size-4 text-primary" />
-              </span>
-              <div className="min-w-0">
-                <h1 className="hidden truncate text-base font-semibold tracking-tight sm:block">{board.name}</h1>
-                <p className="truncate text-[0.7rem] text-muted-foreground">
-                  {board.description || 'Sin descripción'}
-                </p>
-              </div>
-            </div>
+      <div className="shrink-0 border-b border-border/70 px-4 py-2 sm:px-5">
+        <div className="scrollbar-none flex items-center gap-2 overflow-x-auto">
+          <div className="relative shrink-0">
+            <Search className="absolute start-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Filtrar tareas…"
+              className="h-8 w-44 ps-8 text-xs sm:w-56"
+            />
           </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="hidden items-center gap-2 rounded-lg border bg-card/60 px-2.5 py-1.5 sm:flex">
+          <Select value={assigneeId} onValueChange={setAssigneeId}>
+            <SelectTrigger className="h-8 w-[140px] shrink-0 text-xs">
+              <SelectValue placeholder="Responsable" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todo el equipo</SelectItem>
+              {members.map((member) => (
+                <SelectItem key={member.id} value={member.uid}>
+                  {member.displayName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={priority}
+            onValueChange={(value) => setPriority(value as Priority | 'all')}
+          >
+            <SelectTrigger className="h-8 w-[120px] shrink-0 text-xs">
+              <SelectValue placeholder="Prioridad" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toda prioridad</SelectItem>
+              {PRIORITY_VALUES.map((value) => (
+                <SelectItem key={value} value={value}>
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="size-2 rounded-full"
+                      style={{ background: PRIORITY_META[value].color }}
+                    />
+                    {PRIORITY_META[value].label}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={label} onValueChange={setLabel}>
+            <SelectTrigger className="h-8 w-[140px] shrink-0 text-xs">
+              <SelectValue placeholder="Etiqueta" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toda etiqueta</SelectItem>
+              {labelOptions.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {value}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant={mine ? 'secondary' : 'outline'}
+            size="sm"
+            className="h-8 shrink-0 gap-1.5 text-xs"
+            onClick={() => setMine((value) => !value)}
+          >
+            <Filter className="size-3.5" /> Mis tareas
+          </Button>
+          {hasFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 shrink-0 gap-1 text-xs text-muted-foreground"
+              onClick={() => {
+                setQuery('')
+                setAssigneeId('all')
+                setPriority('all')
+                setLabel('all')
+                setMine(false)
+              }}
+            >
+              <X className="size-3.5" /> Limpiar
+            </Button>
+          )}
+          <div className="ms-auto flex shrink-0 items-center gap-2">
+            <div className="hidden items-center gap-2 rounded-lg border bg-card/60 px-2.5 py-1.5 md:flex">
               <CheckCircle2 className="size-3.5 text-emerald-500" />
               <span className="text-[0.68rem] text-muted-foreground">
                 {summary?.completed ?? 0}/{summary?.total ?? 0} completadas
@@ -293,6 +387,9 @@ export function BoardPage() {
                 />
               </div>
             </div>
+            <Badge variant="outline" className="h-6 shrink-0 text-[0.6rem] text-muted-foreground">
+              {filteredTasks.length} de {tasks.length} tareas
+            </Badge>
             <AvatarStack
               people={activePeople.map((member) => ({
                 id: member.uid,
@@ -301,11 +398,11 @@ export function BoardPage() {
               }))}
               max={4}
               size="sm"
-              className="hidden sm:flex"
+              className="hidden lg:flex"
             />
             <Button
               size="sm"
-              className="h-8 gap-1.5"
+              className="h-8 shrink-0 gap-1.5"
               onClick={() => {
                 setCreateColumnId(defaultTaskColumnId(board.columns))
                 setCreateOpen(true)
@@ -316,7 +413,7 @@ export function BoardPage() {
             {canManage && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="size-8" aria-label="Opciones del tablero">
+                  <Button variant="outline" size="icon" className="size-8 shrink-0" aria-label="Opciones del tablero">
                     <MoreHorizontal className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -336,100 +433,16 @@ export function BoardPage() {
             )}
           </div>
         </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="relative">
-            <Search className="absolute start-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Filtrar tareas…"
-              className="h-8 w-44 ps-8 text-xs sm:w-56"
-            />
-          </div>
-          <Select value={assigneeId} onValueChange={setAssigneeId}>
-            <SelectTrigger className="h-8 w-[140px] text-xs">
-              <SelectValue placeholder="Responsable" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todo el equipo</SelectItem>
-              {members.map((member) => (
-                <SelectItem key={member.id} value={member.uid}>
-                  {member.displayName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={priority}
-            onValueChange={(value) => setPriority(value as Priority | 'all')}
-          >
-            <SelectTrigger className="h-8 w-[120px] text-xs">
-              <SelectValue placeholder="Prioridad" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toda prioridad</SelectItem>
-              {PRIORITY_VALUES.map((value) => (
-                <SelectItem key={value} value={value}>
-                  <span className="flex items-center gap-2">
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ background: PRIORITY_META[value].color }}
-                    />
-                    {PRIORITY_META[value].label}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={label} onValueChange={setLabel}>
-            <SelectTrigger className="h-8 w-[140px] text-xs">
-              <SelectValue placeholder="Etiqueta" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toda etiqueta</SelectItem>
-              {labelOptions.map((value) => (
-                <SelectItem key={value} value={value}>
-                  {value}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            variant={mine ? 'secondary' : 'outline'}
-            size="sm"
-            className="h-8 gap-1.5 text-xs"
-            onClick={() => setMine((value) => !value)}
-          >
-            <Filter className="size-3.5" /> Mis tareas
-          </Button>
-          {hasFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-1 text-xs text-muted-foreground"
-              onClick={() => {
-                setQuery('')
-                setAssigneeId('all')
-                setPriority('all')
-                setLabel('all')
-                setMine(false)
-              }}
-            >
-              <X className="size-3.5" /> Limpiar
-            </Button>
-          )}
-          <Badge variant="outline" className="ms-auto h-6 text-[0.6rem] text-muted-foreground">
-            {filteredTasks.length} de {tasks.length} tareas
-          </Badge>
-        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden">
         {loading && tasks.length === 0 ? (
-          <div className="flex gap-3 p-4">
+          <div
+            className="grid gap-3 p-4"
+            style={{ gridTemplateColumns: `repeat(${board.columns.length}, minmax(180px, 1fr))` }}
+          >
             {board.columns.map((column) => (
-              <Skeleton key={column.id} className="h-72 w-[290px] shrink-0 rounded-2xl" />
+              <Skeleton key={column.id} className="h-72 rounded-2xl" />
             ))}
           </div>
         ) : tasks.length === 0 ? (
@@ -453,32 +466,35 @@ export function BoardPage() {
         ) : (
           <DndContext
             sensors={sensors}
-            collisionDetection={closestCorners}
+            collisionDetection={collisionDetection}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDragCancel={() => setActiveId(null)}
           >
-            <div ref={boardScrollRef} className="scrollbar-thin flex h-full gap-3 overflow-x-auto p-3 sm:p-4">
-              {board.columns.map((column) => (
-                <KanbanColumn
-                  key={column.id}
-                  column={column}
-                  tasks={grouped[column.id] ?? []}
-                  tasksById={tasksById}
-                  members={members}
-                  onOpenTask={openTaskDetail}
-                  onCreateTask={(columnId) => {
-                    setCreateColumnId(columnId)
-                    setCreateOpen(true)
-                  }}
-                  onEditColumn={canManage ? () => setColumnsOpen(true) : undefined}
-                />
-              ))}
-              <div className="w-1 shrink-0" />
-            </div>
+          <div
+            ref={boardScrollRef}
+            className="scrollbar-thin grid h-full gap-3 overflow-x-auto p-3 sm:p-4"
+            style={{ gridTemplateColumns: `repeat(${board.columns.length}, minmax(180px, 1fr))` }}
+          >
+            {board.columns.map((column) => (
+              <KanbanColumn
+                key={column.id}
+                column={column}
+                tasks={grouped[column.id] ?? []}
+                tasksById={tasksById}
+                members={members}
+                onOpenTask={openTaskDetail}
+                onCreateTask={(columnId) => {
+                  setCreateColumnId(columnId)
+                  setCreateOpen(true)
+                }}
+                onEditColumn={canManage ? () => setColumnsOpen(true) : undefined}
+              />
+            ))}
+          </div>
             <DragOverlay>
               {activeTask ? (
-                <div className={cn('w-[290px]')}>
+                <div style={{ width: activeWidth }}>
                   <TaskCardContent
                     task={activeTask}
                     members={members}

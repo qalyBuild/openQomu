@@ -12,10 +12,10 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
-import type { FileMeta, Message } from '@/domain/entities/chat'
+import type { Message } from '@/domain/entities/chat'
 import type { Member } from '@/domain/entities/identity'
 import { excerpt, normalizeSearchText } from '@/domain/services/message-service'
-import { formatBytes, isImageFile } from '@/domain/services/file-service'
+import { formatBytes, isImageFile, validateUpload } from '@/domain/services/file-service'
 import { useAuth, useContainer } from '@/app/auth-provider'
 import { useWorkspaceData } from '@/app/workspace-data-provider'
 import { EmojiPicker } from '@/presentation/components/common/emoji-picker'
@@ -23,12 +23,19 @@ import { FileIcon } from '@/presentation/components/common/file-icon'
 import { isNativeApp } from '@/lib/app-url'
 import { cn } from '@/lib/utils'
 
+type PendingAttachment = {
+  key: string
+  file: File
+  previewUrl: string | null
+}
+
 export function MessageComposer({
   channelId,
   replyTo = null,
   lastOwnMessage = null,
   onCancelReply,
   onSent,
+  onDraftChange,
   placeholder = 'Escribe un mensaje…',
   compact = false,
 }: {
@@ -37,6 +44,7 @@ export function MessageComposer({
   lastOwnMessage?: Message | null
   onCancelReply?: () => void
   onSent?: () => void
+  onDraftChange?: (hasDraft: boolean) => void
   placeholder?: string
   compact?: boolean
 }) {
@@ -45,13 +53,15 @@ export function MessageComposer({
   const { session, profile } = useAuth()
   const [body, setBody] = useState('')
   const [editing, setEditing] = useState<Message | null>(null)
-  const [attachments, setAttachments] = useState<FileMeta[]>([])
+  const [attachments, setAttachments] = useState<PendingAttachment[]>([])
   const [sending, setSending] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [mentionIndex, setMentionIndex] = useState(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const attachmentsRef = useRef<PendingAttachment[]>([])
+  attachmentsRef.current = attachments
 
   useEffect(() => {
     const textarea = textareaRef.current
@@ -59,6 +69,18 @@ export function MessageComposer({
     textarea.style.height = 'auto'
     textarea.style.height = `${Math.min(textarea.scrollHeight, 180)}px`
   }, [body])
+
+  useEffect(() => {
+    onDraftChange?.(body.trim().length > 0)
+  }, [body, onDraftChange])
+
+  useEffect(() => {
+    return () => {
+      attachmentsRef.current.forEach((item) => {
+        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl)
+      })
+    }
+  }, [])
 
   useEffect(() => {
     if (replyTo) textareaRef.current?.focus()
@@ -147,29 +169,41 @@ export function MessageComposer({
     })
   }
 
-  const uploadFiles = async (files: FileList | File[]) => {
-    if (!session) return
+  const attachFiles = (files: FileList | File[]) => {
     const list = Array.from(files)
     if (list.length === 0) return
-    setUploading(true)
-    setProgress(0)
-    try {
-      for (const file of list) {
-        const meta = await container.files.upload(
-          workspace.id,
-          { name: file.name, size: file.size, contentType: file.type, data: file },
-          session.id,
-          { onProgress: setProgress },
-        )
-        setAttachments((current) => [...current, meta])
+    const next: PendingAttachment[] = []
+    for (const file of list) {
+      try {
+        validateUpload({ name: file.name, size: file.size, contentType: file.type })
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'No se pudo adjuntar el archivo.')
+        continue
       }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'No se pudo subir el archivo.')
-    } finally {
-      setUploading(false)
-      setProgress(0)
-      if (fileInputRef.current) fileInputRef.current.value = ''
+      next.push({
+        key: crypto.randomUUID(),
+        file,
+        previewUrl: isImageFile({ name: file.name, contentType: file.type })
+          ? URL.createObjectURL(file)
+          : null,
+      })
     }
+    setAttachments((current) => [...current, ...next])
+  }
+
+  const removeAttachment = (key: string) => {
+    setAttachments((current) => {
+      const target = current.find((item) => item.key === key)
+      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl)
+      return current.filter((item) => item.key !== key)
+    })
+  }
+
+  const clearAttachments = () => {
+    attachments.forEach((item) => {
+      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl)
+    })
+    setAttachments([])
   }
 
   const startEditingLast = () => {
@@ -214,6 +248,31 @@ export function MessageComposer({
     if (!body.trim() && attachments.length === 0) return
     setSending(true)
     try {
+      const attachmentIds: string[] = []
+      if (attachments.length > 0) {
+        // Los adjuntos se suben solo al enviar: adjuntar no crea archivos sueltos.
+        setUploading(true)
+        setProgress(0)
+        try {
+          for (const item of attachments) {
+            const meta = await container.files.upload(
+              workspace.id,
+              {
+                name: item.file.name,
+                size: item.file.size,
+                contentType: item.file.type,
+                data: item.file,
+              },
+              session.id,
+              { onProgress: setProgress },
+            )
+            attachmentIds.push(meta.id)
+          }
+        } finally {
+          setUploading(false)
+          setProgress(0)
+        }
+      }
       await container.messages.send({
         workspaceId: workspace.id,
         channelId,
@@ -223,11 +282,11 @@ export function MessageComposer({
           photoURL: profile?.photoURL ?? session.photoURL,
         },
         body,
-        attachmentIds: attachments.map((file) => file.id),
+        attachmentIds,
         replyToId: replyTo?.id ?? null,
       })
       setBody('')
-      setAttachments([])
+      clearAttachments()
       onCancelReply?.()
       announceTyping(false)
       onSent?.()
@@ -301,23 +360,28 @@ export function MessageComposer({
 
       {attachments.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1.5">
-          {attachments.map((file) => (
+          {attachments.map((item) => (
             <div
-              key={file.id}
+              key={item.key}
               className="group flex items-center gap-1.5 rounded-lg border bg-card px-2 py-1.5 text-xs"
             >
-              {isImageFile(file) && file.url ? (
-                <img src={file.url} alt="" className="size-7 rounded object-cover" />
+              {item.previewUrl ? (
+                <img src={item.previewUrl} alt="" className="size-7 rounded object-cover" />
               ) : (
-                <FileIcon file={file} className="size-3.5" />
+                <FileIcon
+                  file={{ name: item.file.name, contentType: item.file.type }}
+                  className="size-3.5"
+                />
               )}
-              <span className="max-w-32 truncate">{file.name}</span>
-              <span className="text-[0.6rem] text-muted-foreground">{formatBytes(file.size)}</span>
+              <span className="max-w-32 truncate">{item.file.name}</span>
+              <span className="text-[0.6rem] text-muted-foreground">
+                {formatBytes(item.file.size)}
+              </span>
               <button
                 type="button"
-                onClick={() => setAttachments((current) => current.filter((item) => item.id !== file.id))}
+                onClick={() => removeAttachment(item.key)}
                 className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-                aria-label={`Quitar ${file.name}`}
+                aria-label={`Quitar ${item.file.name}`}
               >
                 <X className="size-3" />
               </button>
@@ -347,7 +411,7 @@ export function MessageComposer({
             const files = event.clipboardData?.files
             if (files && files.length > 0) {
               event.preventDefault()
-              void uploadFiles(files)
+              attachFiles(files)
             }
           }}
           onKeyDown={(event) => {
@@ -385,7 +449,7 @@ export function MessageComposer({
           }}
           placeholder={editing ? 'Edita tu mensaje…' : placeholder}
           rows={1}
-          className="min-h-[42px] resize-none border-0 bg-transparent px-3 py-2.5 text-sm shadow-none focus-visible:ring-0"
+          className="min-h-[42px] resize-none overflow-y-auto field-sizing-fixed scrollbar-thin border-0 bg-transparent px-3 py-2.5 text-sm shadow-none focus-visible:ring-0"
         />
         <div className="flex items-center gap-0.5 px-2 pb-1.5">
           <input
@@ -394,7 +458,8 @@ export function MessageComposer({
             multiple
             className="hidden"
             onChange={(event) => {
-              if (event.target.files) void uploadFiles(event.target.files)
+              if (event.target.files) attachFiles(event.target.files)
+              event.target.value = ''
             }}
           />
           <Button

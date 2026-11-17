@@ -10,6 +10,13 @@ export const MAX_MESSAGE_LENGTH = 8000
 export const GROUP_WINDOW_MS = 5 * 60 * 1000
 /** Un indicador de escritura caduca si no se refresca en este tiempo. */
 export const TYPING_TTL_MS = 6000
+/** Un mensaje eliminado se muestra una hora y después desaparece sin dejar rastro. */
+export const DELETED_MESSAGE_TTL_MS = 60 * 60 * 1000
+
+export function isDeletedMessageExpired(message: Message, now: number = Date.now()): boolean {
+  if (!message.deletedAt) return false
+  return now - new Date(message.deletedAt).getTime() >= DELETED_MESSAGE_TTL_MS
+}
 
 /**
  * Normaliza texto para comparar nombres y menciones sin depender de tildes,

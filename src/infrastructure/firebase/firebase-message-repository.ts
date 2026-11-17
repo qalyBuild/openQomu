@@ -128,8 +128,6 @@ export class FirebaseMessageRepository implements MessageRepository {
 
   async remove(workspaceId: string, channelId: string, messageId: string): Promise<void> {
     await updateDoc(messageRef(workspaceId, channelId, messageId), {
-      body: '',
-      attachmentIds: [],
       reactions: {},
       deletedAt: nowIso(),
     })

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Navigate, useParams } from 'react-router-dom'
 import { ArrowDown, Hash, Lock, MessageSquare, Settings2, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -9,7 +10,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import type { Message } from '@/domain/entities/chat'
-import { groupMessages } from '@/domain/services/message-service'
+import { groupMessages, isDeletedMessageExpired } from '@/domain/services/message-service'
 import { dayKey, formatDate } from '@/lib/date'
 import { isRecentlyActive } from '@/lib/presence'
 import { useWorkspaceData } from '@/app/workspace-data-provider'
@@ -19,10 +20,11 @@ import { AvatarStack } from '@/presentation/components/common/user-avatar'
 import { EmptyState } from '@/presentation/components/common/empty-state'
 import { CreateChannelDialog } from '@/presentation/features/chat/create-channel-dialog'
 import { MessageComposer } from '@/presentation/features/chat/message-composer'
-import { MessageItem, DaySeparator } from '@/presentation/features/chat/message-item'
+import { MessageItem, DaySeparator, NewMessagesDivider } from '@/presentation/features/chat/message-item'
 import { ThreadSheet } from '@/presentation/features/chat/thread-sheet'
 import { TypingIndicator } from '@/presentation/features/chat/typing-indicator'
 import { ChannelSettingsDialog } from '@/presentation/features/chat/channel-settings-dialog'
+import { cn } from '@/lib/utils'
 
 export function ChatPage() {
   const { channelId } = useParams()
@@ -68,11 +70,27 @@ function ChannelChat({ channelId }: { channelId: string }) {
   const [threadParent, setThreadParent] = useState<Message | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const dividerRef = useRef<HTMLDivElement>(null)
+  const composerRef = useRef<HTMLDivElement>(null)
   const stickToBottom = useRef(true)
   const [showScrollButton, setShowScrollButton] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [topbarSlot, setTopbarSlot] = useState<HTMLElement | null>(null)
+  const [hasDraft, setHasDraft] = useState(false)
+  const unreadSnapshot = useRef<string | null | undefined>(undefined)
+  // Congela el último leído en la primera pintura: marcar como leído después
+  // no debe mover ni borrar la etiqueta «Nuevo» de esta visita.
+  if (unreadSnapshot.current === undefined && !loading) {
+    unreadSnapshot.current = uid ? (reads[uid] ?? null) : null
+  }
+  const unreadFrom = unreadSnapshot.current ?? null
+  const initialScrollDone = useRef(false)
+  const anchorToNew = useRef(false)
 
-  const groups = useMemo(() => groupMessages(messages), [messages])
+  const groups = useMemo(
+    () => groupMessages(messages.filter((message) => !isDeletedMessageExpired(message))),
+    [messages],
+  )
   const lastOwnMessage = useMemo(() => {
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       const message = messages[index]
@@ -112,6 +130,11 @@ function ChannelChat({ channelId }: { channelId: string }) {
     }
   }, [channelId, container, messages.length, uid, workspace.id])
 
+  // Los controles del canal viven en el topbar (esquina superior derecha).
+  useEffect(() => {
+    setTopbarSlot(document.getElementById('chat-topbar-slot'))
+  }, [channelId])
+
   const jumpToBottom = (behavior: ScrollBehavior) => {
     const element = scrollRef.current
     if (!element) return
@@ -121,12 +144,44 @@ function ChannelChat({ channelId }: { channelId: string }) {
 
   useEffect(() => {
     stickToBottom.current = true
-    requestAnimationFrame(() => {
-      jumpToBottom('auto')
-    })
   }, [channelId])
 
+  const firstNewId = useMemo(() => {
+    if (!unreadFrom) return null
+    return messages.find((message) => message.createdAt > unreadFrom)?.id ?? null
+  }, [messages, unreadFrom])
+
+  // Sitúa la vista antes del primer mensaje nuevo (o al final) sin animación
+  // visible: la primera pintura ya está en su posición definitiva.
+  useLayoutEffect(() => {
+    if (loading || initialScrollDone.current) return
+    initialScrollDone.current = true
+    const element = scrollRef.current
+    if (!element) return
+    const divider = dividerRef.current
+    if (divider) {
+      element.scrollTop += divider.getBoundingClientRect().top - element.getBoundingClientRect().top - 8
+      stickToBottom.current = false
+      anchorToNew.current = true
+      setShowScrollButton(true)
+      return
+    }
+    element.scrollTop = element.scrollHeight
+  }, [loading, unreadFrom])
+
+  // El compositor crece al escribir: el chat sube con él mientras sigues abajo.
   useEffect(() => {
+    const node = composerRef.current
+    if (!node) return
+    const observer = new ResizeObserver(() => {
+      if (stickToBottom.current) jumpToBottom('auto')
+    })
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!initialScrollDone.current) return
     if (stickToBottom.current) {
       jumpToBottom('smooth')
     }
@@ -135,6 +190,57 @@ function ChannelChat({ channelId }: { channelId: string }) {
   useEffect(() => {
     if (stickToBottom.current && typingUsers.length > 0) jumpToBottom('smooth')
   }, [typingUsers.length])
+
+  useEffect(() => {
+    if (stickToBottom.current) jumpToBottom('auto')
+  }, [hasDraft])
+
+  // Las imágenes cargan después de la primera pintura y desplazan la etiqueta
+  // «Nuevo». Reancla la vista hasta que la persona toca el chat.
+  useEffect(() => {
+    if (!firstNewId) return
+    const element = scrollRef.current
+    if (!element) return
+    const reanchor = () => {
+      const divider = dividerRef.current
+      if (!anchorToNew.current || !divider) return
+      element.scrollTop +=
+        divider.getBoundingClientRect().top - element.getBoundingClientRect().top - 8
+    }
+    const images = Array.from(element.querySelectorAll('img')).filter((image) => !image.complete)
+    images.forEach((image) => image.addEventListener('load', reanchor))
+    const observer = new ResizeObserver(reanchor)
+    if (element.firstElementChild) observer.observe(element.firstElementChild)
+    const release = () => {
+      anchorToNew.current = false
+    }
+    element.addEventListener('wheel', release, { passive: true })
+    element.addEventListener('touchmove', release, { passive: true })
+    element.addEventListener('pointerdown', release, { passive: true })
+    const frame = requestAnimationFrame(reanchor)
+    return () => {
+      cancelAnimationFrame(frame)
+      observer.disconnect()
+      images.forEach((image) => image.removeEventListener('load', reanchor))
+      element.removeEventListener('wheel', release)
+      element.removeEventListener('touchmove', release)
+      element.removeEventListener('pointerdown', release)
+    }
+  }, [firstNewId])
+
+  // El contenido crece después de pintar (imágenes de adjuntos): si seguimos
+  // abajo, mantén el fondo; si estamos anclados a «Nuevo», lo reancla el otro efecto.
+  useEffect(() => {
+    const element = scrollRef.current
+    const content = element?.firstElementChild
+    if (!element || !content) return
+    const observer = new ResizeObserver(() => {
+      if (anchorToNew.current) return
+      if (stickToBottom.current) element.scrollTop = element.scrollHeight
+    })
+    observer.observe(content)
+    return () => observer.disconnect()
+  }, [])
 
   const onScroll = () => {
     const element = scrollRef.current
@@ -157,72 +263,54 @@ function ChannelChat({ channelId }: { channelId: string }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="flex h-10 shrink-0 items-center gap-3 border-b border-border/70 px-4 sm:h-14 sm:px-5">
-        <span className="hidden size-8 shrink-0 place-items-center rounded-lg border bg-muted/50 sm:grid">
-          {channel.type === 'private' ? (
-            <Lock className="size-4 text-muted-foreground" />
-          ) : (
-            <Hash className="size-4 text-muted-foreground" />
-          )}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="hidden truncate text-sm font-semibold tracking-tight sm:block">
-              {channel.name}
-            </h1>
-            {channel.type === 'private' && (
-              <span className="hidden rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[0.55rem] font-medium uppercase tracking-wide text-amber-600 sm:inline-block dark:text-amber-400">
-                Privado
-              </span>
+      {topbarSlot &&
+        createPortal(
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="hidden items-center gap-2 rounded-full border bg-card/60 px-2 py-1 sm:flex">
+                  <span className="relative flex size-1.5">
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+                    <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
+                  </span>
+                  <Users className="size-3 text-muted-foreground" />
+                  <span className="text-[0.65rem] text-muted-foreground">{members.length}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>{onlineMembers.length} en línea de {members.length}</TooltipContent>
+            </Tooltip>
+            <AvatarStack
+              people={visibleMembers.map((member) => ({
+                id: member.uid,
+                displayName: member.displayName,
+                photoURL: member.photoURL,
+              }))}
+              max={3}
+              size="sm"
+              className="hidden sm:flex"
+            />
+            {canManageChannel && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 text-muted-foreground"
+                onClick={() => setSettingsOpen(true)}
+                aria-label="Ajustes del canal"
+              >
+                <Settings2 className="size-4" />
+              </Button>
             )}
-          </div>
-          <p className="truncate text-[0.68rem] text-muted-foreground">
-            {channel.description || 'Canal del equipo'}
-          </p>
-        </div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="hidden items-center gap-2 rounded-full border bg-card/60 px-2 py-1 sm:flex">
-              <span className="relative flex size-1.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-                <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
-              </span>
-              <Users className="size-3 text-muted-foreground" />
-              <span className="text-[0.65rem] text-muted-foreground">{members.length}</span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>{onlineMembers.length} en línea de {members.length}</TooltipContent>
-        </Tooltip>
-        <AvatarStack
-          people={visibleMembers.map((member) => ({
-            id: member.uid,
-            displayName: member.displayName,
-            photoURL: member.photoURL,
-          }))}
-          max={3}
-          size="sm"
-          className="hidden sm:flex"
-        />
-        {canManageChannel && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8 text-muted-foreground"
-            onClick={() => setSettingsOpen(true)}
-            aria-label="Ajustes del canal"
-          >
-            <Settings2 className="size-4" />
-          </Button>
+          </>,
+          topbarSlot,
         )}
-      </div>
 
       <div className="relative min-h-0 flex-1">
         <div
           ref={scrollRef}
           onScroll={onScroll}
-          className="scrollbar-thin h-full overflow-y-auto px-3 pb-4 sm:px-5"
+          className={cn('scrollbar-thin h-full overflow-y-auto px-3 sm:px-5', hasDraft ? 'pb-16' : 'pb-4')}
         >
-          <div className="mx-auto max-w-4xl">
+          <div className="mx-auto max-w-6xl">
             <div className="py-8 text-center">
               <div className="mx-auto grid size-14 place-items-center rounded-2xl border bg-gradient-to-br from-primary/15 to-fuchsia-500/10 shadow-sm">
                 {channel.type === 'private' ? (
@@ -269,24 +357,30 @@ function ChannelChat({ channelId }: { channelId: string }) {
                     {showSeparator && <DaySeparator iso={group.createdAt} />}
                     <div className="space-y-0.5">
                       {group.messages.map((message, index) => (
-                        <MessageItem
-                          key={message.id}
-                          message={message}
-                          grouped={index > 0}
-                          messages={messages}
-                          files={files}
-                          members={members}
-                          role={role}
-                          uid={uid}
-                          reads={reads}
-                          recipientIds={recipientIds}
-                          onReply={(messageToReply) => {
-                            setReplyTo(messageToReply)
-                            stickToBottom.current = true
-                            requestAnimationFrame(() => scrollToBottom())
-                          }}
-                          onOpenThread={(messageToOpen) => setThreadParent(messageToOpen)}
-                        />
+                        <Fragment key={message.id}>
+                          {message.id === firstNewId && (
+                            <div ref={dividerRef}>
+                              <NewMessagesDivider />
+                            </div>
+                          )}
+                          <MessageItem
+                            message={message}
+                            grouped={index > 0}
+                            messages={messages}
+                            files={files}
+                            members={members}
+                            role={role}
+                            uid={uid}
+                            reads={reads}
+                            recipientIds={recipientIds}
+                            onReply={(messageToReply) => {
+                              setReplyTo(messageToReply)
+                              stickToBottom.current = true
+                              requestAnimationFrame(() => scrollToBottom())
+                            }}
+                            onOpenThread={(messageToOpen) => setThreadParent(messageToOpen)}
+                          />
+                        </Fragment>
                       ))}
                     </div>
                   </div>
@@ -302,7 +396,7 @@ function ChannelChat({ channelId }: { channelId: string }) {
           <Button
             size="sm"
             variant="secondary"
-            className="absolute bottom-3 left-1/2 z-20 h-8 -translate-x-1/2 gap-1.5 rounded-full border shadow-lg"
+            className="absolute bottom-3 end-3 z-20 h-8 gap-1.5 rounded-full border shadow-lg sm:end-5"
             onClick={scrollToBottom}
           >
             <ArrowDown className="size-3.5" /> Ir al final
@@ -310,13 +404,14 @@ function ChannelChat({ channelId }: { channelId: string }) {
         )}
       </div>
 
-      <div className="shrink-0 border-t border-border/70 bg-background/90 backdrop-blur">
-        <div className="mx-auto max-w-4xl">
+      <div ref={composerRef} className="shrink-0 border-t border-border/70 bg-background/90 backdrop-blur">
+        <div className="mx-auto max-w-6xl">
           <MessageComposer
             channelId={channel.id}
             replyTo={replyTo}
             lastOwnMessage={lastOwnMessage}
             onCancelReply={() => setReplyTo(null)}
+            onDraftChange={setHasDraft}
             onSent={scrollToBottom}
           />
         </div>
