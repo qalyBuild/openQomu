@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth, useContainer } from '@/app/auth-provider'
 import { Button } from '@/components/ui/button'
+import { LoadingScreen } from '@/presentation/components/common/loading-screen'
 import { publicAppUrl, publicLandingUrl } from '@/lib/app-url'
 
 /**
@@ -115,6 +116,10 @@ export function EntryPage() {
         </div>
       </div>
     )
+  }
+
+  if (demoAuto || autoDemoRequested) {
+    return <LoadingScreen label="Preparando la demo…" />
   }
 
   return <div className="min-h-svh bg-background" aria-hidden="true" />
