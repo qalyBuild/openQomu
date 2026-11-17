@@ -11,7 +11,7 @@ import { WorkspacesProvider, useWorkspaces } from './workspaces-provider'
 import { MobileRuntime } from './mobile-runtime'
 import { ErrorBoundary } from './error-boundary'
 import { LoadingScreen } from '@/presentation/components/common/loading-screen'
-import { LandingPage } from '@/presentation/pages/landing-page'
+import { EntryPage } from '@/presentation/pages/entry-page'
 import { NotFoundPage } from '@/presentation/pages/not-found-page'
 
 const WorkspaceRoute = lazy(() =>
@@ -137,7 +137,7 @@ export function App({ container }: { container: AppContainer }) {
                   <MobileRuntime />
                   <Suspense fallback={<LoadingScreen />}>
                     <Routes>
-                      <Route path="/" element={<LandingPage />} />
+                      <Route path="/" element={<EntryPage />} />
                       <Route path="/join/:code" element={<JoinPage />} />
                       <Route element={<RequireAuth />}>
                         <Route path="/app" element={<AppGate />} />

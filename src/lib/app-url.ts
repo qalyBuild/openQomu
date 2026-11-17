@@ -30,7 +30,10 @@ export function publicAppUrl(): string {
   return `${publicAppOrigin()}${base}`.replace(/\/$/, '')
 }
 
-/** Landing estática externa. Vacía mantiene la landing incluida en la app. */
+const DEFAULT_LANDING_URL = 'https://openqomu.web.app'
+
+/** Landing estática externa. */
 export function publicLandingUrl(): string {
-  return import.meta.env.VITE_LANDING_URL?.trim().replace(/\/$/, '') ?? ''
+  const configured = import.meta.env.VITE_LANDING_URL?.trim()
+  return (configured || DEFAULT_LANDING_URL).replace(/\/$/, '')
 }

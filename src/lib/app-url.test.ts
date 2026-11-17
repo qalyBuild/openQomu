@@ -6,7 +6,7 @@ describe('app-url', () => {
     expect(publicAppUrl()).not.toMatch(/\/$/)
   })
 
-  it('no impone landing externa por defecto', () => {
-    expect(publicLandingUrl()).toBe('')
+  it('usa la landing pública por defecto', () => {
+    expect(publicLandingUrl()).toBe('https://openqomu.web.app')
   })
 })
