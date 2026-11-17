@@ -1,5 +1,6 @@
 import {
   GoogleAuthProvider,
+  getRedirectResult,
   onAuthStateChanged,
   signInWithCredential,
   signInWithPopup,
@@ -43,7 +44,12 @@ export class FirebaseAuthRepository implements AuthPort {
   }
 
   onAuthStateChanged(callback: Subscriber<SessionUser | null>): Unsubscribe {
-    return onAuthStateChanged(getFirebaseAuth(), (user) => callback(toSessionUser(user)))
+    const auth = getFirebaseAuth()
+    // Completa el retorno de signInWithRedirect; sin esto la sesión nunca se hidrata.
+    void getRedirectResult(auth).catch((error: unknown) => {
+      console.error('[openqomu] redirect', error)
+    })
+    return onAuthStateChanged(auth, (user) => callback(toSessionUser(user)))
   }
 
   async signInWithGoogle(): Promise<SessionUser> {

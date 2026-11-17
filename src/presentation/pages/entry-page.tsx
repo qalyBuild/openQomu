@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth, useContainer } from '@/app/auth-provider'
 import { Button } from '@/components/ui/button'
@@ -19,6 +19,7 @@ export function EntryPage() {
   const autoDemoRequested = params.get('demo') === '1'
   const enterRequested = params.get('entrar') === '1'
   const demoAuto = import.meta.env.VITE_DEMO_AUTO === 'true' && isDemo
+  const [retry, setRetry] = useState(false)
 
   const returnTo = (() => {
     try {
@@ -33,6 +34,7 @@ export function EntryPage() {
     const target = from ?? returnTo ?? '/app'
     try {
       sessionStorage.removeItem('openqomu:return-to')
+      sessionStorage.removeItem('openqomu:signin-pending')
     } catch {
       /* sin almacenamiento */
     }
@@ -44,7 +46,23 @@ export function EntryPage() {
     if (status !== 'anonymous' || pending) return
     if (!enterRequested && !autoDemoRequested && !demoAuto) return
     if (signInStarted.current) return
+    // Si volvemos de Google, no repetir el login: Firebase hidrata la sesión.
+    let attempt = 0
+    try {
+      attempt = Number(sessionStorage.getItem('openqomu:signin-pending') || 0)
+    } catch {
+      /* sin almacenamiento */
+    }
+    if (attempt && Date.now() - attempt < 10 * 60 * 1000) {
+      setRetry(true)
+      return
+    }
     signInStarted.current = true
+    try {
+      sessionStorage.setItem('openqomu:signin-pending', String(Date.now()))
+    } catch {
+      /* sin almacenamiento */
+    }
     void signInWithGoogle()
   }, [autoDemoRequested, demoAuto, enterRequested, pending, signInWithGoogle, status])
 
@@ -57,6 +75,33 @@ export function EntryPage() {
     url.searchParams.set('app', publicAppUrl())
     window.location.replace(url.href)
   }, [autoDemoRequested, demoAuto, enterRequested, pending, status])
+
+  if (retry && status === 'anonymous') {
+    return (
+      <div className="grid min-h-svh place-items-center bg-background p-6 text-center">
+        <div className="max-w-md">
+          <h1 className="text-lg font-semibold tracking-tight">Entrar en openQomu</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Completa el acceso con la cuenta de Google de esta instancia.
+          </p>
+          <Button
+            className="mt-5"
+            onClick={() => {
+              setRetry(false)
+              try {
+                sessionStorage.setItem('openqomu:signin-pending', String(Date.now()))
+              } catch {
+                /* sin almacenamiento */
+              }
+              void signInWithGoogle()
+            }}
+          >
+            Continuar con Google
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   if (error && !pending) {
     return (
