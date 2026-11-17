@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
-  ArrowRight,
   Bell,
   BellOff,
   FileText,
@@ -27,6 +26,7 @@ import { isRecentlyActive } from '@/lib/presence'
 import { cn } from '@/lib/utils'
 import { useNotifications } from '@/presentation/features/notifications/notifications-provider'
 import { NotificationBadge } from './notification-badge'
+import { ThemeToggle } from '@/presentation/components/common/theme-toggle'
 import { WorkspaceSwitcher } from './workspace-switcher'
 import { PageTree } from './page-tree'
 import { CreateChannelDialog } from '@/presentation/features/chat/create-channel-dialog'
@@ -196,59 +196,93 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
       </div>
 
       <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-2 pb-3">
-        {onNavigate && (
-          <div className="mb-3 space-y-0.5 lg:hidden">
-            <SidebarHeader title="Navegación" />
-            <SidebarLink
-              to={`/w/${workspace.id}/dashboard`}
-              icon={LayoutDashboard}
-              label="Resumen"
-              active={section === 'dashboard'}
-            />
-            <SidebarLink
-              to={
-                channels[0]
-                  ? `/w/${workspace.id}/c/${channels[0].id}`
-                  : `/w/${workspace.id}/dashboard`
-              }
-              icon={MessageSquare}
-              label="Chat"
-              active={section === 'chat'}
-            />
-            <SidebarLink
-              to={`/w/${workspace.id}/boards`}
-              icon={KanbanSquare}
-              label="Tableros"
-              active={section === 'boards'}
-            />
-            <SidebarLink
-              to={`/w/${workspace.id}/pages`}
-              icon={FileText}
-              label="Documentos"
-              active={section === 'pages'}
-            />
-            <SidebarLink
-              to={`/w/${workspace.id}/files`}
-              icon={FolderOpen}
-              label="Archivos"
-              active={section === 'files'}
-            />
-            <SidebarLink
-              to={`/w/${workspace.id}/members`}
-              icon={Users}
-              label="Miembros"
-              active={section === 'members'}
-            />
-            <SidebarLink
-              to={`/w/${workspace.id}/settings`}
-              icon={Settings}
-              label="Ajustes"
-              active={section === 'settings'}
-            />
-          </div>
-        )}
+        <div className="mb-3 space-y-0.5">
+          <SidebarHeader title="Navegación" />
+          <SidebarLink
+            to={`/w/${workspace.id}/dashboard`}
+            icon={LayoutDashboard}
+            label="Resumen"
+            active={section === 'dashboard'}
+          />
+          <SidebarLink
+            to={
+              channels[0]
+                ? `/w/${workspace.id}/c/${channels[0].id}`
+                : `/w/${workspace.id}/dashboard`
+            }
+            icon={MessageSquare}
+            label="Chat"
+            active={section === 'chat'}
+            badge={
+              <NotificationBadge
+                count={notifications.bySection.chat}
+                mention={notifications.items.some(
+                  (item) => item.section === 'chat' && item.kind === 'mention',
+                )}
+                label={`${notifications.bySection.chat} avisos en Chat`}
+              />
+            }
+          />
+          <SidebarLink
+            to={`/w/${workspace.id}/boards`}
+            icon={KanbanSquare}
+            label="Tableros"
+            active={section === 'boards'}
+            badge={
+              <NotificationBadge
+                count={notifications.bySection.boards}
+                mention={notifications.items.some(
+                  (item) => item.section === 'boards' && item.kind === 'mention',
+                )}
+                label={`${notifications.bySection.boards} avisos en Tableros`}
+              />
+            }
+          />
+          <SidebarLink
+            to={`/w/${workspace.id}/pages`}
+            icon={FileText}
+            label="Documentos"
+            active={section === 'pages'}
+            badge={
+              <NotificationBadge
+                count={notifications.bySection.pages}
+                label={`${notifications.bySection.pages} avisos en Documentos`}
+              />
+            }
+          />
+          <SidebarLink
+            to={`/w/${workspace.id}/files`}
+            icon={FolderOpen}
+            label="Archivos"
+            active={section === 'files'}
+            badge={
+              <NotificationBadge
+                count={notifications.bySection.files}
+                label={`${notifications.bySection.files} avisos en Archivos`}
+              />
+            }
+          />
+          <SidebarLink
+            to={`/w/${workspace.id}/members`}
+            icon={Users}
+            label="Miembros"
+            active={section === 'members'}
+            badge={
+              <NotificationBadge
+                count={notifications.bySection.members}
+                label={`${notifications.bySection.members} avisos en Miembros`}
+              />
+            }
+          />
+          <SidebarLink
+            to={`/w/${workspace.id}/settings`}
+            icon={Settings}
+            label="Ajustes"
+            active={section === 'settings'}
+          />
+        </div>
         {section === 'chat' && (
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 border-t border-sidebar-border pt-3">
             <SidebarHeader
               title="Canales"
               count={channels.length}
@@ -307,7 +341,7 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
         )}
 
         {section === 'boards' && (
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 border-t border-sidebar-border pt-3">
             <SidebarHeader
               title="Tableros"
               count={boards.length}
@@ -344,19 +378,11 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
                 }
               />
             ))}
-            <div className="pt-2">
-              <SidebarLink
-                to={`/w/${workspace.id}/boards`}
-                icon={ArrowRight}
-                label="Todos los tableros"
-                active={location.pathname.endsWith('/boards')}
-              />
-            </div>
           </div>
         )}
 
         {section === 'pages' && (
-          <div>
+          <div className="border-t border-sidebar-border pt-3">
             <SidebarHeader
               title="Páginas"
               count={pages.length}
@@ -378,27 +404,13 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
               }
             />
             <PageTree pages={tree} workspaceId={workspace.id} />
-            <div className="pt-2">
-              <SidebarLink
-                to={`/w/${workspace.id}/pages`}
-                icon={FolderOpen}
-                label="Todas las páginas"
-                active={location.pathname.endsWith('/pages')}
-                badge={
-                  <NotificationBadge
-                    count={targetCount(notifications, 'pages', 'all')}
-                    label={`${targetCount(notifications, 'pages', 'all')} páginas nuevas`}
-                  />
-                }
-              />
-            </div>
           </div>
         )}
 
         {section === 'files' && <FilesExplorer onNavigate={onNavigate} />}
 
         {section === 'dashboard' && (
-          <div className="space-y-4">
+          <div className="space-y-4 border-t border-sidebar-border pt-3">
             <div>
               <SidebarHeader title="Canales" />
               {channels.slice(0, 5).map((channel) => (
@@ -420,14 +432,6 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
                   />
                 </Link>
               ))}
-              {channels[0] && (
-                <SidebarLink
-                  to={`/w/${workspace.id}/c/${channels[0].id}`}
-                  icon={MessageSquare}
-                  label="Abrir chat"
-                  active={false}
-                />
-              )}
             </div>
             <div>
               <SidebarHeader title="Tableros" />
@@ -462,7 +466,7 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
         )}
 
         {section === 'members' && (
-          <div className="space-y-4">
+          <div className="space-y-4 border-t border-sidebar-border pt-3">
             <div>
               <SidebarHeader title="Equipo" count={members.length} />
               {members.slice(0, 8).map((member) => (
@@ -483,35 +487,11 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
                 </div>
               ))}
             </div>
-            <div className="border-t border-sidebar-border pt-3">
-              <SidebarLink
-                to={`/w/${workspace.id}/dashboard`}
-                icon={LayoutDashboard}
-                label="Resumen"
-              />
-              <SidebarLink
-                to={`/w/${workspace.id}/members`}
-                icon={Users}
-                label="Miembros"
-                active
-                badge={
-                  <NotificationBadge
-                    count={targetCount(notifications, 'members', 'all')}
-                    label={`${targetCount(notifications, 'members', 'all')} miembros nuevos`}
-                  />
-                }
-              />
-              <SidebarLink
-                to={`/w/${workspace.id}/settings`}
-                icon={Settings}
-                label="Ajustes"
-              />
-            </div>
           </div>
         )}
 
         {section === 'settings' && (
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 border-t border-sidebar-border pt-3">
             <SidebarHeader title="Ajustes" />
             <SidebarLink
               to={`/w/${workspace.id}/settings`}
@@ -531,13 +511,6 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
               label="Apariencia"
               active={location.search.includes('tab=appearance')}
             />
-            <div className="pt-3">
-              <SidebarLink
-                to={`/w/${workspace.id}/members`}
-                icon={Users}
-                label="Miembros"
-              />
-            </div>
           </div>
         )}
       </div>
@@ -565,6 +538,7 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
             </div>
           </div>
         )}
+        <ThemeToggle />
         <NotificationSoundToggle
           enabled={notifications.soundEnabled}
           onToggle={notifications.toggleSound}
