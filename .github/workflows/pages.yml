@@ -26,8 +26,11 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_BASE_PATH: /
           VITE_PRODUCT_NAME: ${{ vars.VITE_PRODUCT_NAME || 'openQomu' }}
+          VITE_DEMO_MODE: 'true'
+          VITE_DEMO_AUTO: 'true'
+          VITE_PUBLIC_APP_URL: https://demo.openqomu.qaly.dev
           VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
@@ -38,9 +41,8 @@ jobs:
           VITE_FILES_URL: ${{ vars.VITE_FILES_URL }}
           VITE_PUSH_URL: ${{ vars.VITE_PUSH_URL }}
           VITE_MCP_URL: ${{ vars.VITE_MCP_URL }}
-          VITE_PUBLIC_APP_URL: ${{ vars.VITE_PUBLIC_APP_URL }}
           VITE_APK_URL: ${{ vars.VITE_APK_URL }}
-          VITE_LANDING_URL: ${{ vars.VITE_LANDING_URL || 'https://openqomu.web.app' }}
+          VITE_LANDING_URL: https://openqomu.qaly.dev
       - name: Fallback de rutas para Pages
         run: cp dist/index.html dist/404.html
       - uses: actions/configure-pages@v5

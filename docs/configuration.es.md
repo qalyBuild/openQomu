@@ -18,6 +18,7 @@ Vite incorpora los valores `VITE_*` al paquete. Son públicos: nunca pongas secr
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | vacío | Emisor de FCM. |
 | `VITE_FIREBASE_APP_ID` | vacío | Identificador de la app de Firebase. |
 | `VITE_DEMO_MODE` | `false` | Fuerza el modo local aunque haya Firebase. |
+| `VITE_DEMO_AUTO` | `false` | En modo demo, entra directo al espacio al abrir `/`. |
 | `VITE_USE_FIREBASE_EMULATORS` | `false` | Conecta Auth, Firestore y Storage a los emuladores locales. |
 | `VITE_FILE_STORAGE` | `firestore` | Backend de archivos: `firestore`, `storage` o `s3`. |
 | `VITE_FILES_URL` | vacío | URL del Worker de archivos. Obligatoria con `s3`. |

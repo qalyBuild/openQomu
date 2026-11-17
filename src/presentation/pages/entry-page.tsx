@@ -18,6 +18,7 @@ export function EntryPage() {
   const params = new URLSearchParams(location.search)
   const autoDemoRequested = params.get('demo') === '1'
   const enterRequested = params.get('entrar') === '1'
+  const demoAuto = import.meta.env.VITE_DEMO_AUTO === 'true' && isDemo
 
   const returnTo = (() => {
     try {
@@ -41,21 +42,21 @@ export function EntryPage() {
   const signInStarted = useRef(false)
   useEffect(() => {
     if (status !== 'anonymous' || pending) return
-    if (!enterRequested && !(autoDemoRequested && isDemo)) return
+    if (!enterRequested && !autoDemoRequested && !demoAuto) return
     if (signInStarted.current) return
     signInStarted.current = true
     void signInWithGoogle()
-  }, [autoDemoRequested, enterRequested, isDemo, pending, signInWithGoogle, status])
+  }, [autoDemoRequested, demoAuto, enterRequested, pending, signInWithGoogle, status])
 
   const landingSent = useRef(false)
   useEffect(() => {
-    if (enterRequested || autoDemoRequested) return
+    if (enterRequested || autoDemoRequested || demoAuto) return
     if (status !== 'anonymous' || pending || landingSent.current) return
     landingSent.current = true
     const url = new URL(publicLandingUrl())
     url.searchParams.set('app', publicAppUrl())
     window.location.replace(url.href)
-  }, [autoDemoRequested, enterRequested, pending, status])
+  }, [autoDemoRequested, demoAuto, enterRequested, pending, status])
 
   if (error && !pending) {
     return (

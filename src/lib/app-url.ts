@@ -30,7 +30,7 @@ export function publicAppUrl(): string {
   return `${publicAppOrigin()}${base}`.replace(/\/$/, '')
 }
 
-const DEFAULT_LANDING_URL = 'https://openqomu.web.app'
+const DEFAULT_LANDING_URL = 'https://openqomu.qaly.dev'
 
 /** Landing estática externa. */
 export function publicLandingUrl(): string {

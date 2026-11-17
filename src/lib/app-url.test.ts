@@ -7,6 +7,6 @@ describe('app-url', () => {
   })
 
   it('usa la landing pública por defecto', () => {
-    expect(publicLandingUrl()).toBe('https://openqomu.web.app')
+    expect(publicLandingUrl()).toBe('https://openqomu.qaly.dev')
   })
 })

@@ -18,6 +18,7 @@ Vite inlines `VITE_*` values into the bundle. They are public: never put a secre
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | empty | FCM sender. |
 | `VITE_FIREBASE_APP_ID` | empty | Firebase app identifier. |
 | `VITE_DEMO_MODE` | `false` | Forces local mode even with Firebase configured. |
+| `VITE_DEMO_AUTO` | `false` | In demo mode, enters the workspace directly on `/`. |
 | `VITE_USE_FIREBASE_EMULATORS` | `false` | Connects Auth, Firestore and Storage to local emulators. |
 | `VITE_FILE_STORAGE` | `firestore` | File backend: `firestore`, `storage` or `s3`. |
 | `VITE_FILES_URL` | empty | File Worker URL. Required for `s3`. |
