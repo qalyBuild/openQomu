@@ -20,7 +20,7 @@ import { useAuth, useContainer } from '@/app/auth-provider'
 import { QRCodeSVG } from 'qrcode.react'
 import { Logo, BrandMark } from '@/presentation/components/brand/logo'
 import { UserAvatar } from '@/presentation/components/common/user-avatar'
-import { publicApkUrl, publicAppOrigin } from '@/lib/app-url'
+import { publicApkUrl, publicAppOrigin, publicAppUrl, publicLandingUrl } from '@/lib/app-url'
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -68,20 +68,52 @@ export function LandingPage() {
   const from = (location.state as { from?: string } | null)?.from
   const isDemo = container.mode === 'demo'
   const apkUrl = publicApkUrl()
+  const landingUrl = publicLandingUrl()
+
+  // El destino profundo sobrevive al viaje a la landing externa.
+  const returnTo = (() => {
+    try {
+      return sessionStorage.getItem('openqomu:return-to')
+    } catch {
+      return null
+    }
+  })()
 
   useEffect(() => {
-    if (status === 'authenticated') navigate(from ?? '/app', { replace: true })
-  }, [from, navigate, status])
+    if (status !== 'authenticated') return
+    const target = from ?? returnTo ?? '/app'
+    try {
+      sessionStorage.removeItem('openqomu:return-to')
+    } catch {
+      /* sin almacenamiento */
+    }
+    navigate(target, { replace: true })
+  }, [from, navigate, returnTo, status])
 
-  // `?demo=1` abre la demo directamente: enlaces externos sin pasar por la landing.
-  const autoDemoRequested = new URLSearchParams(location.search).get('demo') === '1'
+  const params = new URLSearchParams(location.search)
+  const autoDemoRequested = params.get('demo') === '1'
+  const enterRequested = params.get('entrar') === '1'
   const demoStarted = useRef(false)
+
+  // `?entrar=1` vuelve desde la landing y firma directamente. `?demo=1` entra en demo.
   useEffect(() => {
-    if (!autoDemoRequested || !isDemo || status !== 'anonymous' || pending) return
+    if (status !== 'anonymous' || pending) return
+    if (!enterRequested && !(autoDemoRequested && isDemo)) return
     if (demoStarted.current) return
     demoStarted.current = true
     void signInWithGoogle()
-  }, [autoDemoRequested, isDemo, pending, signInWithGoogle, status])
+  }, [autoDemoRequested, enterRequested, isDemo, pending, signInWithGoogle, status])
+
+  // Sin login, la landing pública sustituye a la landing incluida en el bundle.
+  const landingSent = useRef(false)
+  useEffect(() => {
+    if (!landingUrl || enterRequested || autoDemoRequested) return
+    if (status !== 'anonymous' || pending || landingSent.current) return
+    landingSent.current = true
+    const url = new URL(landingUrl)
+    url.searchParams.set('app', publicAppUrl())
+    window.location.replace(url.href)
+  }, [autoDemoRequested, enterRequested, landingUrl, pending, status])
 
   return (
     <div className="safe-area-top relative min-h-svh overflow-x-hidden bg-background">

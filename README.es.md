@@ -85,6 +85,7 @@ Todas las opciones están en [docs/configuration.es.md](docs/configuration.es.md
 | `VITE_PUSH_URL` | URL del Worker de push. Opcional. |
 | `VITE_MCP_URL` | URL del servidor MCP. Opcional. |
 | `VITE_PUBLIC_APP_URL` | URL pública para enlaces compartidos. Obligatoria en la app Android. |
+| `VITE_LANDING_URL` | Landing pública externa. Sin ella se usa la de la app. |
 | `VITE_APK_URL` | URL de descarga de la APK. Si está vacía, la sección Android se oculta. |
 
 ## Desarrollo

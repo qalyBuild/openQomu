@@ -40,6 +40,7 @@ jobs:
           VITE_MCP_URL: ${{ vars.VITE_MCP_URL }}
           VITE_PUBLIC_APP_URL: ${{ vars.VITE_PUBLIC_APP_URL }}
           VITE_APK_URL: ${{ vars.VITE_APK_URL }}
+          VITE_LANDING_URL: ${{ vars.VITE_LANDING_URL || 'https://openqomu.web.app' }}
       - name: Fallback de rutas para Pages
         run: cp dist/index.html dist/404.html
       - uses: actions/configure-pages@v5

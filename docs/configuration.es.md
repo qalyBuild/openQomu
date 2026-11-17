@@ -25,6 +25,7 @@ Vite incorpora los valores `VITE_*` al paquete. Son públicos: nunca pongas secr
 | `VITE_MCP_URL` | vacío | URL del servidor MCP. Opcional; oculta la configuración de IA cuando está vacía. |
 | `VITE_PUBLIC_APP_URL` | origen actual | URL pública para enlaces compartidos. Obligatoria en la app Android. |
 | `VITE_APP_LINK_HOSTS` | vacío | Hosts extra de App Links de Android, separados por comas. |
+| `VITE_LANDING_URL` | vacío | Landing pública externa. Sin ella se usa la landing de la app. |
 | `VITE_APK_URL` | vacío | URL de descarga de la APK. Si está vacía, la sección Android se oculta. |
 | `VITE_GOOGLE_WEB_CLIENT_ID` | vacío | Client ID web de Google para el login nativo. |
 

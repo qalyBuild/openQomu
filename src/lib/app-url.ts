@@ -20,3 +20,17 @@ export function publicAppOrigin(): string {
 export function publicApkUrl(): string {
   return import.meta.env.VITE_APK_URL?.trim() ?? ''
 }
+
+/**
+ * URL pública de la app, incluido el subdirectorio base (GitHub Pages).
+ * Se pasa a la landing para que su botón «Entrar» vuelva a esta instancia.
+ */
+export function publicAppUrl(): string {
+  const base = import.meta.env.BASE_URL || '/'
+  return `${publicAppOrigin()}${base}`.replace(/\/$/, '')
+}
+
+/** Landing estática externa. Vacía mantiene la landing incluida en la app. */
+export function publicLandingUrl(): string {
+  return import.meta.env.VITE_LANDING_URL?.trim().replace(/\/$/, '') ?? ''
+}

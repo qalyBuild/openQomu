@@ -85,6 +85,7 @@ Every option is documented in [docs/configuration.md](docs/configuration.md). Th
 | `VITE_PUSH_URL` | Push Worker URL. Optional. |
 | `VITE_MCP_URL` | MCP server URL. Optional. |
 | `VITE_PUBLIC_APP_URL` | Public URL used in shared links. Required for the Android app. |
+| `VITE_LANDING_URL` | External public landing. When empty the app's own landing is used. |
 | `VITE_APK_URL` | APK download URL. When empty the Android section is hidden. |
 
 ## Development

@@ -68,7 +68,13 @@ function RequireAuth() {
   const location = useLocation()
   if (status === 'loading') return <LoadingScreen />
   if (status === 'anonymous') {
-    return <Navigate to="/" replace state={{ from: `${location.pathname}${location.search}` }} />
+    const target = `${location.pathname}${location.search}`
+    try {
+      sessionStorage.setItem('openqomu:return-to', target)
+    } catch {
+      /* sin almacenamiento */
+    }
+    return <Navigate to="/" replace state={{ from: target }} />
   }
   return <Outlet />
 }

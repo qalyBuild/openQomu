@@ -25,6 +25,7 @@ Vite inlines `VITE_*` values into the bundle. They are public: never put a secre
 | `VITE_MCP_URL` | empty | MCP server URL. Optional; hides the AI setup when empty. |
 | `VITE_PUBLIC_APP_URL` | current origin | Public URL used in shared links. Required for the Android app. |
 | `VITE_APP_LINK_HOSTS` | empty | Extra Android App Link hosts, comma separated. |
+| `VITE_LANDING_URL` | empty | External public landing. When empty the app's own landing is used. |
 | `VITE_APK_URL` | empty | APK download URL. When empty the Android section is hidden. |
 | `VITE_GOOGLE_WEB_CLIENT_ID` | empty | Google web client ID for native sign-in. |
 
