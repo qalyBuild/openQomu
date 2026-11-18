@@ -1,3 +1,4 @@
+import { BoardSelectOptions } from '@/presentation/features/kanban/board-choices'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
@@ -204,11 +205,7 @@ export function DashboardPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">General · todos los tableros</SelectItem>
-                {boards.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.name}
-                  </SelectItem>
-                ))}
+                <BoardSelectOptions boards={boards} />
               </SelectContent>
             </Select>
             <Button

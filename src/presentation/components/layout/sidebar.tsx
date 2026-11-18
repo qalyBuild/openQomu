@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { groupBoardChoices, MUTED_BOARDS_LABEL } from '@/presentation/features/kanban/board-choices'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   Bell,
@@ -10,6 +11,7 @@ import {
   LayoutDashboard,
   Lock,
   MessageSquare,
+  PanelLeftClose,
   Plus,
   Search,
   Settings,
@@ -21,7 +23,7 @@ import { Kbd } from '@/components/ui/kbd'
 import { useWorkspaceData } from '@/app/workspace-data-provider'
 import { useAuth } from '@/app/auth-provider'
 import { buildPageTree } from '@/domain/services/page-service'
-import { isBoardMuted } from '@/domain/entities/kanban'
+import { isBoardMuted, type Board } from '@/domain/entities/kanban'
 import { notificationKey } from '@/domain/services/notification-service'
 import { isRecentlyActive } from '@/lib/presence'
 import { cn } from '@/lib/utils'
@@ -35,6 +37,7 @@ import { BoardDialog } from '@/presentation/features/kanban/board-dialog'
 import { BoardStatusBadge } from '@/presentation/features/kanban/board-status-badge'
 import { CreatePageDialog } from '@/presentation/features/pages/create-page-dialog'
 import { UserAvatar } from '@/presentation/components/common/user-avatar'
+import { WorkspaceIcon } from '@/presentation/components/common/workspace-icon'
 import { FilesExplorer } from '@/presentation/features/files/files-explorer'
 
 type Section = 'dashboard' | 'chat' | 'boards' | 'pages' | 'files' | 'members' | 'settings'
@@ -75,26 +78,31 @@ function SidebarLink({
   label,
   active,
   badge,
+  compact = false,
 }: {
   to: string
   icon: React.ComponentType<{ className?: string }>
   label: string
   active?: boolean
+  compact?: boolean
   badge?: React.ReactNode
 }) {
   return (
     <Link
       to={to}
+      title={compact ? label : undefined}
+      aria-current={active ? 'page' : undefined}
       className={cn(
         'group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[0.84rem] transition-colors',
+        compact && 'relative h-10 justify-center px-0',
         active
           ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground'
           : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground',
       )}
     >
       <Icon className="size-4 shrink-0 text-muted-foreground" />
-      <span className="min-w-0 flex-1 truncate">{label}</span>
-      {badge}
+      <span className={compact ? 'sr-only' : 'min-w-0 flex-1 truncate'}>{label}</span>
+      {badge && <span className={compact ? 'absolute end-0 top-0' : 'contents'}>{badge}</span>}
     </Link>
   )
 }
@@ -126,27 +134,35 @@ function targetMention(
 }
 
 function NotificationSoundToggle({
+  compact,
   enabled,
   onToggle,
 }: {
+  compact: boolean
   enabled: boolean
   onToggle: () => void
 }) {
+  const label = enabled ? 'Silenciar avisos' : 'Activar sonido de avisos'
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-pressed={enabled}
-      aria-label={enabled ? 'Silenciar avisos' : 'Activar sonido de avisos'}
-      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[0.72rem] text-muted-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-foreground"
+      aria-label={label}
+      title={compact ? label : undefined}
+      className={cn(
+        'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[0.72rem] text-muted-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-foreground',
+        compact && 'h-9 justify-center',
+      )}
     >
       {enabled ? <Bell className="size-3.5" /> : <BellOff className="size-3.5" />}
-      <span className="truncate">
+      <span hidden={compact} className="truncate">
         {enabled ? 'Sonido de avisos activado' : 'Avisos silenciados'}
       </span>
       <span
         className={cn(
           'ms-auto size-1.5 rounded-full',
+          compact && 'hidden',
           enabled ? 'bg-emerald-500' : 'bg-muted-foreground/40',
         )}
       />
@@ -154,7 +170,17 @@ function NotificationSoundToggle({
   )
 }
 
-export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavigate?: () => void }) {
+export function Sidebar({
+  onSearch,
+  onNavigate,
+  collapsed = false,
+  onToggleCollapsed,
+}: {
+  onSearch: () => void
+  onNavigate?: () => void
+  collapsed?: boolean
+  onToggleCollapsed?: () => void
+}) {
   const {
     workspace,
     channels,
@@ -164,6 +190,7 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
     can,
     uid,
   } = useWorkspaceData()
+  const { active: activeBoards, muted: mutedBoards } = groupBoardChoices(boards, (board) => board.status)
   const { session, profile } = useAuth()
   const notifications = useNotifications()
   const location = useLocation()
@@ -177,6 +204,38 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
   const currentPhotoURL =
     currentMember?.photoURL || profile?.photoURL || session?.photoURL || null
 
+  const toggleButton = useRef<HTMLButtonElement>(null)
+  const restoreToggleFocus = useRef(false)
+
+  useLayoutEffect(() => {
+    if (!restoreToggleFocus.current) return
+    restoreToggleFocus.current = false
+    toggleButton.current?.focus()
+  }, [collapsed])
+
+  function toggleCollapsed() {
+    if (!onToggleCollapsed) return
+    restoreToggleFocus.current = true
+    onToggleCollapsed()
+  }
+
+  const renderBoardLink = (board: Board) => (
+    <SidebarLink
+      key={board.id}
+      to={`/w/${workspace.id}/boards/${board.id}`}
+      icon={KanbanSquare}
+      label={board.name}
+      active={location.pathname.includes(`/boards/${board.id}`)}
+      badge={isBoardMuted(board.status) ? <BoardStatusBadge status={board.status} /> : (
+        <NotificationBadge
+          count={targetCount(notifications, 'boards', board.id)}
+          mention={targetMention(notifications, 'boards', board.id)}
+          label={`${targetCount(notifications, 'boards', board.id)} tareas requieren tu atención en ${board.name}`}
+        />
+      )}
+    />
+  )
+
   return (
     <div
       className="flex h-full min-h-0 flex-col bg-sidebar/80"
@@ -184,26 +243,70 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
         if ((event.target as HTMLElement).closest('a')) onNavigate?.()
       }}
     >
-      <div className="p-3 pb-2">
-        <WorkspaceSwitcher workspace={workspace} />
+      <div className={collapsed ? 'px-2 py-3' : 'p-3 pb-2'}>
+        <div className={cn('flex items-center gap-1', collapsed && 'flex-col')}>
+          {collapsed ? (
+            <Button
+              ref={toggleButton}
+              type="button"
+              variant="ghost"
+              className="h-auto w-full justify-center rounded-xl px-0 py-1 hover:bg-sidebar-accent"
+              aria-label={`Expandir barra lateral de ${workspace.name}`}
+              aria-controls="desktop-sidebar"
+              aria-expanded={false}
+              title="Expandir barra lateral"
+              onClick={toggleCollapsed}
+            >
+              <WorkspaceIcon icon={workspace.icon} />
+            </Button>
+          ) : (
+            <WorkspaceSwitcher workspace={workspace} />
+          )}
+          {!collapsed && onToggleCollapsed && (
+            <Button
+              ref={toggleButton}
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8 shrink-0 border border-sidebar-border bg-sidebar-accent/70 text-sidebar-foreground hover:bg-sidebar-accent"
+              onClick={toggleCollapsed}
+              aria-controls="desktop-sidebar"
+              aria-expanded
+              aria-label="Comprimir barra lateral"
+              title="Comprimir barra lateral"
+            >
+              <PanelLeftClose />
+            </Button>
+          )}
+        </div>
         <button
           type="button"
           onClick={onSearch}
-          className="mt-2 flex w-full items-center gap-2 rounded-lg border border-sidebar-border bg-background/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/30 hover:bg-background"
+          title={collapsed ? 'Buscar en openQomu' : undefined}
+          aria-label={collapsed ? 'Buscar en openQomu' : undefined}
+          className={cn(
+            'mt-2 flex w-full items-center gap-2 rounded-lg border border-sidebar-border bg-background/50 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary/30 hover:bg-background',
+            collapsed && 'h-9 justify-center px-0',
+          )}
         >
           <Search className="size-3.5" />
-          <span className="flex-1 text-start">Buscar en openQomu…</span>
-          <Kbd className="hidden text-[0.6rem] sm:inline-flex">⌘K</Kbd>
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-start">Buscar en openQomu…</span>
+              <Kbd className="hidden text-[0.6rem] sm:inline-flex">⌘K</Kbd>
+            </>
+          )}
         </button>
       </div>
 
-      <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+      <div className={cn('min-h-0 flex-1 overflow-y-auto px-2 pb-3', collapsed ? 'scrollbar-none' : 'scrollbar-thin')}>
         <div className="mb-3 space-y-0.5">
-          <SidebarHeader title="Navegación" />
+          {!collapsed && <SidebarHeader title="Navegación" />}
           <SidebarLink
             to={`/w/${workspace.id}/dashboard`}
             icon={LayoutDashboard}
             label="Resumen"
+            compact={collapsed}
             active={section === 'dashboard'}
           />
           <SidebarLink
@@ -214,6 +317,7 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
             }
             icon={MessageSquare}
             label="Chat"
+            compact={collapsed}
             active={section === 'chat'}
             badge={
               <NotificationBadge
@@ -229,6 +333,7 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
             to={`/w/${workspace.id}/boards`}
             icon={KanbanSquare}
             label="Tableros"
+            compact={collapsed}
             active={section === 'boards'}
             badge={
               <NotificationBadge
@@ -244,6 +349,7 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
             to={`/w/${workspace.id}/pages`}
             icon={FileText}
             label="Documentos"
+            compact={collapsed}
             active={section === 'pages'}
             badge={
               <NotificationBadge
@@ -256,6 +362,7 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
             to={`/w/${workspace.id}/files`}
             icon={FolderOpen}
             label="Archivos"
+            compact={collapsed}
             active={section === 'files'}
             badge={
               <NotificationBadge
@@ -268,6 +375,7 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
             to={`/w/${workspace.id}/members`}
             icon={Users}
             label="Miembros"
+            compact={collapsed}
             active={section === 'members'}
             badge={
               <NotificationBadge
@@ -280,10 +388,11 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
             to={`/w/${workspace.id}/settings`}
             icon={Settings}
             label="Ajustes"
+            compact={collapsed}
             active={section === 'settings'}
           />
         </div>
-        {section === 'chat' && (
+        {!collapsed && section === 'chat' && (
           <div className="space-y-0.5 border-t border-sidebar-border pt-3">
             <SidebarHeader
               title="Canales"
@@ -342,7 +451,7 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
           </div>
         )}
 
-        {section === 'boards' && (
+        {!collapsed && section === 'boards' && (
           <div className="space-y-0.5 border-t border-sidebar-border pt-3">
             <SidebarHeader
               title="Tableros"
@@ -364,26 +473,17 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
                 ) : null
               }
             />
-            {boards.map((board) => (
-              <SidebarLink
-                key={board.id}
-                to={`/w/${workspace.id}/boards/${board.id}`}
-                icon={KanbanSquare}
-                label={board.name}
-                active={location.pathname.includes(`/boards/${board.id}`)}
-                badge={isBoardMuted(board.status) ? <BoardStatusBadge status={board.status} /> : (
-                  <NotificationBadge
-                    count={targetCount(notifications, 'boards', board.id)}
-                    mention={targetMention(notifications, 'boards', board.id)}
-                    label={`${targetCount(notifications, 'boards', board.id)} tareas requieren tu atención en ${board.name}`}
-                  />
-                )}
-              />
-            ))}
+            {activeBoards.map(renderBoardLink)}
+            {mutedBoards.length > 0 && (
+              <div className="mt-2 space-y-0.5 border-t border-sidebar-border pt-2">
+                <SidebarHeader title={MUTED_BOARDS_LABEL} count={mutedBoards.length} />
+                {mutedBoards.map(renderBoardLink)}
+              </div>
+            )}
           </div>
         )}
 
-        {section === 'pages' && (
+        {!collapsed && section === 'pages' && (
           <div className="border-t border-sidebar-border pt-3">
             <SidebarHeader
               title="Páginas"
@@ -409,9 +509,9 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
           </div>
         )}
 
-        {section === 'files' && <FilesExplorer onNavigate={onNavigate} />}
+        {!collapsed && section === 'files' && <FilesExplorer onNavigate={onNavigate} />}
 
-        {section === 'dashboard' && (
+        {!collapsed && section === 'dashboard' && (
           <div className="space-y-4 border-t border-sidebar-border pt-3">
             <div>
               <SidebarHeader title="Canales" />
@@ -437,21 +537,13 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
             </div>
             <div>
               <SidebarHeader title="Tableros" />
-              {boards.slice(0, 3).map((board) => (
-                <SidebarLink
-                  key={board.id}
-                  to={`/w/${workspace.id}/boards/${board.id}`}
-                  icon={KanbanSquare}
-                  label={board.name}
-                  badge={isBoardMuted(board.status) ? <BoardStatusBadge status={board.status} /> : (
-                    <NotificationBadge
-                      count={targetCount(notifications, 'boards', board.id)}
-                      mention={targetMention(notifications, 'boards', board.id)}
-                      label={`${targetCount(notifications, 'boards', board.id)} tareas requieren tu atención`}
-                    />
-                  )}
-                />
-              ))}
+              {activeBoards.slice(0, 3).map(renderBoardLink)}
+              {mutedBoards.length > 0 && activeBoards.length < 3 && (
+                <div className="mt-2">
+                  <SidebarHeader title={MUTED_BOARDS_LABEL} />
+                  {mutedBoards.slice(0, 3 - activeBoards.length).map(renderBoardLink)}
+                </div>
+              )}
             </div>
             <div>
               <SidebarHeader title="Páginas" />
@@ -467,7 +559,7 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
           </div>
         )}
 
-        {section === 'members' && (
+        {!collapsed && section === 'members' && (
           <div className="space-y-4 border-t border-sidebar-border pt-3">
             <div>
               <SidebarHeader title="Equipo" count={members.length} />
@@ -492,7 +584,7 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
           </div>
         )}
 
-        {section === 'settings' && (
+        {!collapsed && section === 'settings' && (
           <div className="space-y-0.5 border-t border-sidebar-border pt-3">
             <SidebarHeader title="Ajustes" />
             <SidebarLink
@@ -517,8 +609,8 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
         )}
       </div>
 
-      <div className="space-y-1 border-t border-sidebar-border p-3">
-        {onlineMembers.length > 0 && (
+      <div className={cn('space-y-1 border-t border-sidebar-border', collapsed ? 'p-2' : 'p-3')}>
+        {!collapsed && onlineMembers.length > 0 && (
           <div className="mb-2 flex items-center gap-2 px-1">
             <span className="relative flex size-2">
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-60" />
@@ -540,18 +632,24 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
             </div>
           </div>
         )}
-        <ThemeToggle />
+        <ThemeToggle compact={collapsed} />
         <NotificationSoundToggle
+          compact={collapsed}
           enabled={notifications.soundEnabled}
           onToggle={notifications.toggleSound}
         />
         <button
           type="button"
           onClick={() => navigate(`/w/${workspace.id}/settings?tab=profile`)}
-          className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[0.75rem] text-muted-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-foreground"
+          aria-label={collapsed ? 'Cuenta y preferencias' : undefined}
+          title={collapsed ? 'Cuenta y preferencias' : undefined}
+          className={cn(
+            'flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[0.75rem] text-muted-foreground transition-colors hover:bg-sidebar-accent/60 hover:text-foreground',
+            collapsed && 'h-9 justify-center',
+          )}
         >
           <UserAvatar name={currentName} photoURL={currentPhotoURL} size="xs" />
-          <span className="truncate">Cuenta y preferencias</span>
+          {!collapsed && <span className="truncate">Cuenta y preferencias</span>}
         </button>
       </div>
     </div>
