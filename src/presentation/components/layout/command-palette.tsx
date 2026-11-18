@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { groupBoardChoices, MUTED_BOARDS_LABEL } from '@/presentation/features/kanban/board-choices'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   FileText,
@@ -41,6 +42,7 @@ export function CommandPalette({
 }) {
   const container = useContainer()
   const { workspace, channels, boards, pages, members, files } = useWorkspaceData()
+  const { active: activeBoards, muted: mutedBoards } = groupBoardChoices(boards, (board) => board.status)
   const navigate = useNavigate()
   const [tasks, setTasks] = useState<TaskWithBoard[]>([])
 
@@ -177,11 +179,11 @@ export function CommandPalette({
           </>
         )}
 
-        {boards.length > 0 && (
-          <>
+        {[activeBoards, mutedBoards].map((group) => group.length > 0 && (
+          <Fragment key={group === activeBoards ? 'active-boards' : 'muted-boards'}>
             <CommandSeparator />
-            <CommandGroup heading="Tableros">
-              {boards.map((board) => (
+            <CommandGroup heading={group === activeBoards ? 'Tableros' : MUTED_BOARDS_LABEL}>
+              {group.map((board) => (
                 <CommandItem
                   key={board.id}
                   value={`tablero ${board.name} ${board.description}`}
@@ -197,8 +199,8 @@ export function CommandPalette({
                 </CommandItem>
               ))}
             </CommandGroup>
-          </>
-        )}
+          </Fragment>
+        ))}
 
         {pages.length > 0 && (
           <>

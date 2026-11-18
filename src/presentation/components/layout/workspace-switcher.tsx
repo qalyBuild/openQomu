@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Check, ChevronsUpDown, Plus, Settings, Sparkles } from 'lucide-react'
+import { Check, Plus, Settings, Sparkles } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +22,7 @@ export function WorkspaceSwitcher({ workspace }: { workspace: Workspace }) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="h-auto w-full justify-start gap-2.5 rounded-xl px-2 py-2 text-start hover:bg-sidebar-accent"
+          className="h-auto min-w-0 flex-1 justify-start gap-2.5 rounded-xl px-2 py-2 text-start hover:bg-sidebar-accent"
         >
           <WorkspaceIcon icon={workspace.icon} name={workspace.name} />
           <span className="min-w-0 flex-1">
@@ -33,7 +33,6 @@ export function WorkspaceSwitcher({ workspace }: { workspace: Workspace }) {
               {workspaces.length} {workspaces.length === 1 ? 'espacio' : 'espacios'}
             </span>
           </span>
-          <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
@@ -65,7 +64,7 @@ export function WorkspaceSwitcher({ workspace }: { workspace: Workspace }) {
         <DropdownMenuSeparator />
         <div className="flex items-center gap-2 px-2 py-1.5 text-[0.7rem] text-muted-foreground">
           <Sparkles className="size-3.5 text-primary" />
-          openQomu · conversaciones, tareas y notas
+          Qomu · conversaciones, tareas y notas
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

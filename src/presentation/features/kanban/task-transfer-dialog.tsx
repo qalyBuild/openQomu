@@ -1,3 +1,4 @@
+import { BoardSelectOptions, groupBoardChoices } from '@/presentation/features/kanban/board-choices'
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowRightLeft, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -57,10 +58,11 @@ export function TaskTransferDialog({
     let cancelled = false
     setLoading(true)
     void Promise.all(
-      workspaces.map(async (workspace) => ({
-        workspace,
-        boards: await container.boards.list(workspace.id),
-      })),
+      workspaces.map(async (workspace) => {
+        const boards = await container.boards.list(workspace.id)
+        const { active, muted } = groupBoardChoices(boards, (board) => board.status)
+        return { workspace, boards: [...active, ...muted] }
+      }),
     )
       .then((next) => {
         if (cancelled) return
@@ -247,11 +249,7 @@ export function TaskTransferDialog({
                 <SelectValue placeholder="Elige un tablero" />
               </SelectTrigger>
               <SelectContent>
-                {availableBoards.map((board) => (
-                  <SelectItem key={board.id} value={board.id}>
-                    {board.name}
-                  </SelectItem>
-                ))}
+                <BoardSelectOptions boards={availableBoards} />
               </SelectContent>
             </Select>
             {!loading && availableBoards.length === 0 && (

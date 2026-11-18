@@ -16,6 +16,15 @@ export function WorkspaceRoute() {
     if (currentWorkspaceId) rememberWorkspace(currentWorkspaceId)
   }, [currentWorkspaceId, rememberWorkspace])
 
+  const workspaceName = workspace?.name
+  useEffect(() => {
+    if (!workspaceName) return
+    document.title = `openQomu · ${workspaceName}`
+    return () => {
+      document.title = 'openQomu — Tu equipo, en sintonía'
+    }
+  }, [workspaceName])
+
   if (loading) return <LoadingScreen label="Abriendo el espacio…" />
   if (!workspace) return <Navigate to="/app" replace />
 

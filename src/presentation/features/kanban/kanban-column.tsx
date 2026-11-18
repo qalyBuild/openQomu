@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { Fragment, useMemo } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { MoreHorizontal, Plus } from 'lucide-react'
@@ -58,12 +58,19 @@ export function KanbanColumn({
       )}
     >
       <div className="flex items-center gap-2 px-3 py-2.5">
-        <span className="size-2 rounded-full" style={{ background: column.color }} />
-        <span className="text-xs font-semibold uppercase tracking-[0.08em]">{column.name}</span>
-        <Badge variant="secondary" className="h-4 min-w-4 px-1 text-[0.6rem]">
+        <span className="size-2 shrink-0 rounded-full" style={{ background: column.color }} />
+        <span className="min-w-0 wrap-break-word text-xs font-semibold uppercase tracking-[0.08em]">
+          {column.name.split('/').map((part, index) => (
+            <Fragment key={index}>
+              {index > 0 && <>/<wbr /></>}
+              {part}
+            </Fragment>
+          ))}
+        </span>
+        <Badge variant="secondary" className="h-4 min-w-4 shrink-0 px-1 text-[0.6rem]">
           {tasks.length}
         </Badge>
-        <div className="ms-auto flex items-center gap-0.5">
+        <div className="ms-auto flex shrink-0 items-center gap-0.5">
           {onEditColumn && (
             <Button
               variant="ghost"
