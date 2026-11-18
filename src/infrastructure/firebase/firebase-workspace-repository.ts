@@ -282,6 +282,15 @@ export class FirebaseWorkspaceRepository implements WorkspaceRepository {
     return invite
   }
 
+  async listInvites(workspaceId: string): Promise<Invite[]> {
+    const snapshot = await getDocs(query(collection(db(), 'invites'), where('workspaceId', '==', workspaceId)))
+    return snapshot.docs.map((item) => mapInvite(item.id, item.data())).filter((invite) => !isInviteExpired(invite))
+  }
+
+  async revokeInvite(code: string): Promise<void> {
+    await deleteDoc(doc(db(), 'invites', code.toUpperCase()))
+  }
+
   async getInvite(code: string): Promise<Invite | null> {
     const snapshot = await getDoc(doc(db(), 'invites', code.toUpperCase()))
     return snapshot.exists() ? mapInvite(snapshot.id, snapshot.data()) : null

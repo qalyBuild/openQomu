@@ -17,6 +17,7 @@ class FakeStore implements Store {
   comment: { id: string; authorId: string; authorName: string; body: string } | null = null
   channel: ChannelRecord | null = null
   workspace: WorkspaceRecord | null = null
+  board: { status?: string } | null = {}
   task: TaskRecord | null = null
 
   async getEvent() {
@@ -44,6 +45,9 @@ class FakeStore implements Store {
   }
   async getTask() {
     return this.task
+  }
+  async getBoard() {
+    return this.board
   }
   async listDevices(): Promise<DeviceRecord[]> {
     return []
@@ -130,6 +134,18 @@ describe('resolveNotification', () => {
     expect(resolved?.recipients).toEqual(['u2', 'u3'])
     expect(resolved?.content.title).toBe('Nueva tarea asignada')
     expect(resolved?.content.path).toBe('/w/w1/boards/b1?task=t1')
+  })
+
+  it.each(['paused', 'deprecated'])('silencia los avisos de tareas cuando el tablero está %s', async (status) => {
+    const store = new FakeStore()
+    store.board = { status }
+    store.task = { id: 't1', title: 'Crear app', assigneeIds: ['u2'], reviewerId: 'u3', createdBy: 'u1' }
+    for (const kind of ['task.created', 'task.updated', 'task.comment'] as const) {
+      const queued = event({ kind, boardId: 'b1', taskId: 't1', commentId: 'reply', changedFields: ['reviewerId'] })
+      expect(await resolveNotification(store, queued)).toBeNull()
+    }
+    store.board = { status: 'normal' }
+    expect(await resolveNotification(store, event({ kind: 'task.created', boardId: 'b1', taskId: 't1' }))).not.toBeNull()
   })
 
   it('solo notifica cambios de responsables o revisión', async () => {

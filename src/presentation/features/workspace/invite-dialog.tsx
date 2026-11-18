@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { CalendarClock, Check, Copy, Link2, RefreshCw } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Copy, Link2, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { useContainer } from '@/app/auth-provider'
 import { useWorkspaceData } from '@/app/workspace-data-provider'
 import { buildInviteLink } from '@/domain/services/workspace-service'
@@ -25,34 +24,52 @@ export function InviteDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const container = useContainer()
+  const { mode, workspaces } = useContainer()
   const { workspace, uid, can } = useWorkspaceData()
-  const [invite, setInvite] = useState<Invite | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [copied, setCopied] = useState(false)
+  const [invites, setInvites] = useState<Invite[] | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [loadError, setLoadError] = useState(false)
   const allowed = can('member.invite')
 
-  const generate = useCallback(async () => {
-    if (!uid) return
-    setLoading(true)
+  useEffect(() => {
+    if (!open || !allowed) return
+    let cancelled = false
+    setInvites(null)
+    setLoadError(false)
+    void workspaces.listInvites(workspace.id).then(
+      (items) => { if (!cancelled) setInvites(items) },
+      () => { if (!cancelled) setLoadError(true) },
+    )
+    return () => { cancelled = true }
+  }, [allowed, open, workspace.id, workspaces])
+
+  const createInvite = async () => {
+    setBusy(true)
     try {
-      const created = await container.workspaces.createInvite(workspace.id, uid)
-      setInvite(created)
+      const invite = await workspaces.createInvite(workspace.id, uid)
+      setInvites((items) => [invite, ...(items ?? [])])
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'No se pudo crear la invitación.')
     } finally {
-      setLoading(false)
+      setBusy(false)
     }
-  }, [container, uid, workspace.id])
+  }
 
-  useEffect(() => {
-    if (open && allowed && !invite) void generate()
-  }, [allowed, generate, invite, open])
+  const revoke = async (code: string) => {
+    setBusy(true)
+    try {
+      await workspaces.revokeInvite(code)
+      setInvites((items) => items?.filter((invite) => invite.code !== code) ?? null)
+      toast.success('Enlace revocado.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'No se pudo revocar la invitación.')
+    } finally {
+      setBusy(false)
+    }
+  }
 
-  const link = invite ? buildInviteLink(invite.code, publicAppOrigin()) : ''
-
-  const copy = async () => {
-    if (!link) return
+  const copy = async (code: string) => {
+    const link = buildInviteLink(code, publicAppOrigin())
     try {
       await navigator.clipboard.writeText(link)
     } catch {
@@ -60,12 +77,14 @@ export function InviteDialog({
       textarea.value = link
       document.body.appendChild(textarea)
       textarea.select()
-      document.execCommand('copy')
+      const copied = document.execCommand('copy')
       textarea.remove()
+      if (!copied) {
+        toast.error('No se pudo copiar el enlace.')
+        return
+      }
     }
-    setCopied(true)
     toast.success('Enlace copiado al portapapeles.')
-    window.setTimeout(() => setCopied(false), 2000)
   }
 
   return (
@@ -79,67 +98,44 @@ export function InviteDialog({
             Invita a tu equipo
           </DialogTitle>
           <DialogDescription>
-            Comparte este enlace con quien quieras que se una a{' '}
-            <strong className="font-medium text-foreground">{workspace.name}</strong>. Caduca en 7
-            días.
+            Los enlaces permiten unirse a {workspace.name} como miembro y caducan en 7 días.
           </DialogDescription>
         </DialogHeader>
 
         {!allowed ? (
-          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-600 dark:text-amber-400">
-            Solo propietarios y administradores pueden crear invitaciones.
+          <p className="text-sm text-muted-foreground">
+            Solo propietarios y administradores pueden gestionar invitaciones.
           </p>
         ) : (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                readOnly
-                value={invite ? link : 'Generando enlace…'}
-                className="font-mono text-xs"
-                onFocus={(event) => event.currentTarget.select()}
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => void copy()}
-                disabled={!invite}
-                aria-label="Copiar enlace"
-              >
-                {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
+          <>
+            <div className="max-h-64 space-y-2 overflow-y-auto" aria-live="polite">
+              {loadError && <p className="text-sm text-destructive">No se pudieron cargar las invitaciones.</p>}
+              {invites === null && !loadError && <p className="text-sm text-muted-foreground">Cargando enlaces…</p>}
+              {invites?.length === 0 && <p className="text-sm text-muted-foreground">No hay enlaces activos.</p>}
+              {invites?.map(({ code, expiresAt }) => (
+                <div key={code} className="flex items-center gap-2 rounded-lg bg-muted/60 px-3 py-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-mono text-sm">{code}</p>
+                    <p className="text-xs text-muted-foreground">Caduca el {formatDate(expiresAt)}</p>
+                  </div>
+                  <Button variant="outline" size="icon" disabled={busy} aria-label={`Copiar enlace ${code}`} onClick={() => void copy(code)}>
+                    <Copy />
+                  </Button>
+                  <Button variant="ghost" size="icon" disabled={busy} aria-label={`Revocar enlace ${code}`} onClick={() => void revoke(code)}>
+                    <Trash2 />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            {mode === 'demo' && <p className="text-xs text-muted-foreground">En la demo, los enlaces solo funcionan en este navegador.</p>}
+            <DialogFooter>
+              <Button disabled={invites === null || busy || !uid} onClick={() => void createInvite()}>
+                <Plus />
+                Crear enlace
               </Button>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <CalendarClock className="size-3.5" />
-                {invite ? `Caduca el ${formatDate(invite.expiresAt)}` : 'Generando…'}
-              </span>
-              <span>
-                Código: <strong className="font-mono text-foreground">{invite?.code ?? '—'}</strong>
-              </span>
-            </div>
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              Al abrir el enlace, la persona inicia sesión con Google y se une automáticamente como
-              miembro.
-              {container.mode === 'demo' && (
-                <span className="mt-1 block text-amber-600 dark:text-amber-400">
-                  En modo demo los datos son locales a este navegador, así que el enlace sirve como
-                  demostración del flujo.
-                </span>
-              )}
-            </p>
-          </div>
+            </DialogFooter>
+          </>
         )}
-
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => void generate()} disabled={!allowed || loading}>
-            <RefreshCw className={loading ? 'size-4 animate-spin' : 'size-4'} />
-            Generar otro
-          </Button>
-          <Button onClick={() => void copy()} disabled={!invite}>
-            <Copy className="size-4" />
-            Copiar enlace
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

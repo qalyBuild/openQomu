@@ -165,6 +165,11 @@ export class FirestoreStore implements Store {
     }
   }
 
+  async getBoard(workspaceId: string, boardId: string): Promise<{ status?: string } | null> {
+    const document = await getDocument(this.env, `workspaces/${workspaceId}/boards/${boardId}`)
+    return document ? { status: asString(document.data.status) } : null
+  }
+
   async getTask(
     workspaceId: string,
     boardId: string,

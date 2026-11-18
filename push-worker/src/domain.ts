@@ -97,6 +97,7 @@ export interface Store {
   ): Promise<CommentRecord | null>
   getChannel(workspaceId: string, channelId: string): Promise<ChannelRecord | null>
   getWorkspace(workspaceId: string): Promise<WorkspaceRecord | null>
+  getBoard(workspaceId: string, boardId: string): Promise<{ status?: string } | null>
   getTask(workspaceId: string, boardId: string, taskId: string): Promise<TaskRecord | null>
   listDevices(uid: string): Promise<DeviceRecord[]>
   deleteDevice(uid: string, deviceId: string): Promise<void>
@@ -171,8 +172,11 @@ export async function resolveNotification(
   }
 
   if (!event.boardId || !event.taskId) return null
-  const task = await store.getTask(event.workspaceId, event.boardId, event.taskId)
-  if (!task) return null
+  const [board, task] = await Promise.all([
+    store.getBoard(event.workspaceId, event.boardId),
+    store.getTask(event.workspaceId, event.boardId, event.taskId),
+  ])
+  if (!board || !task || board.status === 'paused' || board.status === 'deprecated') return null
   const recipients = dedupe(event.actorId, [...task.assigneeIds, task.reviewerId ?? ''])
   const path = `/w/${event.workspaceId}/boards/${event.boardId}?task=${event.taskId}`
 

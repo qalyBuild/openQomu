@@ -113,6 +113,11 @@ describe('demo workspaces e invitaciones', () => {
         photoURL: null,
       }),
     ).rejects.toThrow('caducado')
+
+    expect(await container.workspaces.listInvites(workspace.id)).toEqual([invite])
+    await container.workspaces.revokeInvite(invite.code)
+    expect(await container.workspaces.listInvites(workspace.id)).toEqual([])
+    await expect(container.workspaces.acceptInvite(invite.code, guest)).rejects.toThrow('no existe')
   })
 
   it('cambia roles y protege al owner', async () => {

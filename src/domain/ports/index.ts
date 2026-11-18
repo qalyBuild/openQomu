@@ -75,6 +75,8 @@ export interface WorkspaceRepository {
   updateMemberRole(workspaceId: string, uid: string, role: Role): Promise<void>
   removeMember(workspaceId: string, uid: string): Promise<void>
   createInvite(workspaceId: string, createdBy: string): Promise<Invite>
+  listInvites(workspaceId: string): Promise<Invite[]>
+  revokeInvite(code: string): Promise<void>
   getInvite(code: string): Promise<Invite | null>
   acceptInvite(code: string, user: SessionUser): Promise<Workspace>
 }
