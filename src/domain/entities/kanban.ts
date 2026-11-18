@@ -36,11 +36,23 @@ export function mergeBoardColumns(boards: Pick<Board, 'columns'>[]): BoardColumn
   return [...merged.values()]
 }
 
+export const BOARD_STATUSES = ['normal', 'paused', 'deprecated'] as const
+export type BoardStatus = (typeof BOARD_STATUSES)[number]
+
+export function isBoardStatus(value: unknown): value is BoardStatus {
+  return BOARD_STATUSES.some((status) => status === value)
+}
+
+export function isBoardMuted(status: unknown): boolean {
+  return status === 'paused' || status === 'deprecated'
+}
+
 export interface Board {
   id: string
   workspaceId: string
   name: string
   description: string
+  status?: BoardStatus
   columns: BoardColumn[]
   /** Etiquetas predeterminadas que el equipo decidió ocultar. */
   hiddenLabels?: string[]

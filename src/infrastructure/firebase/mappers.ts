@@ -9,7 +9,7 @@ import type {
 } from '@/domain/entities/identity'
 import { PRIORITY_VALUES, ROLE_VALUES } from '@/domain/entities/identity'
 import type { Board, BoardColumn, Task, TaskComment } from '@/domain/entities/kanban'
-import { DEFAULT_BOARD_COLUMNS } from '@/domain/entities/kanban'
+import { DEFAULT_BOARD_COLUMNS, isBoardStatus } from '@/domain/entities/kanban'
 import type { Page } from '@/domain/entities/pages'
 import { EMPTY_PAGE_CONTENT } from '@/domain/entities/pages'
 import type { DocumentData } from 'firebase/firestore'
@@ -125,11 +125,13 @@ function mapColumns(value: unknown): BoardColumn[] {
 }
 
 export function mapBoard(id: string, workspaceId: string, data: DocumentData): Board {
+  const status: unknown = data.status
   return {
     id,
     workspaceId,
     name: asString(data.name, 'Tablero'),
     description: asString(data.description),
+    status: isBoardStatus(status) ? status : 'normal',
     columns: mapColumns(data.columns),
     hiddenLabels: Array.isArray(data.hiddenLabels)
       ? data.hiddenLabels.filter((label): label is string => typeof label === 'string')

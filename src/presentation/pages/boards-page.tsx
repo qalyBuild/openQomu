@@ -9,7 +9,8 @@ import { summarizeBoard } from '@/domain/services/task-service'
 import { useContainer } from '@/app/auth-provider'
 import { useWorkspaceData } from '@/app/workspace-data-provider'
 import { EmptyState } from '@/presentation/components/common/empty-state'
-import { CreateBoardDialog } from '@/presentation/features/kanban/create-board-dialog'
+import { BoardDialog } from '@/presentation/features/kanban/board-dialog'
+import { BoardStatusBadge } from '@/presentation/features/kanban/board-status-badge'
 import { UserAvatar } from '@/presentation/components/common/user-avatar'
 
 interface BoardStats {
@@ -54,7 +55,7 @@ export function BoardsPage() {
             </p>
           </div>
           {can('board.create') && (
-            <CreateBoardDialog
+            <BoardDialog
               trigger={
                 <Button className="gap-1.5">
                   <Plus className="size-4" /> Nuevo tablero
@@ -76,7 +77,7 @@ export function BoardsPage() {
             title="Aún no hay tableros"
             description="Crea un tablero para planificar el sprint, el lanzamiento o lo que necesite el equipo."
             action={
-              <CreateBoardDialog
+              <BoardDialog
                 trigger={
                   <Button>
                     <Plus className="size-4" /> Crear tablero
@@ -101,9 +102,10 @@ export function BoardsPage() {
                           <KanbanSquare className="size-4" />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <h2 className="truncate text-sm font-semibold tracking-tight">
-                            {board.name}
-                          </h2>
+                          <div className="flex items-center gap-2">
+                            <h2 className="truncate text-sm font-semibold tracking-tight">{board.name}</h2>
+                            <BoardStatusBadge status={board.status} />
+                          </div>
                           <p className="line-clamp-2 text-xs text-muted-foreground">
                             {board.description || 'Sin descripción'}
                           </p>

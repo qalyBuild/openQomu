@@ -21,6 +21,7 @@ import { Kbd } from '@/components/ui/kbd'
 import { useWorkspaceData } from '@/app/workspace-data-provider'
 import { useAuth } from '@/app/auth-provider'
 import { buildPageTree } from '@/domain/services/page-service'
+import { isBoardMuted } from '@/domain/entities/kanban'
 import { notificationKey } from '@/domain/services/notification-service'
 import { isRecentlyActive } from '@/lib/presence'
 import { cn } from '@/lib/utils'
@@ -30,7 +31,8 @@ import { ThemeToggle } from '@/presentation/components/common/theme-toggle'
 import { WorkspaceSwitcher } from './workspace-switcher'
 import { PageTree } from './page-tree'
 import { CreateChannelDialog } from '@/presentation/features/chat/create-channel-dialog'
-import { CreateBoardDialog } from '@/presentation/features/kanban/create-board-dialog'
+import { BoardDialog } from '@/presentation/features/kanban/board-dialog'
+import { BoardStatusBadge } from '@/presentation/features/kanban/board-status-badge'
 import { CreatePageDialog } from '@/presentation/features/pages/create-page-dialog'
 import { UserAvatar } from '@/presentation/components/common/user-avatar'
 import { FilesExplorer } from '@/presentation/features/files/files-explorer'
@@ -347,7 +349,7 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
               count={boards.length}
               action={
                 can('board.create') ? (
-                  <CreateBoardDialog
+                  <BoardDialog
                     trigger={
                       <Button
                         variant="ghost"
@@ -369,13 +371,13 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
                 icon={KanbanSquare}
                 label={board.name}
                 active={location.pathname.includes(`/boards/${board.id}`)}
-                badge={
+                badge={isBoardMuted(board.status) ? <BoardStatusBadge status={board.status} /> : (
                   <NotificationBadge
                     count={targetCount(notifications, 'boards', board.id)}
                     mention={targetMention(notifications, 'boards', board.id)}
                     label={`${targetCount(notifications, 'boards', board.id)} tareas requieren tu atención en ${board.name}`}
                   />
-                }
+                )}
               />
             ))}
           </div>
@@ -441,13 +443,13 @@ export function Sidebar({ onSearch, onNavigate }: { onSearch: () => void; onNavi
                   to={`/w/${workspace.id}/boards/${board.id}`}
                   icon={KanbanSquare}
                   label={board.name}
-                  badge={
+                  badge={isBoardMuted(board.status) ? <BoardStatusBadge status={board.status} /> : (
                     <NotificationBadge
                       count={targetCount(notifications, 'boards', board.id)}
                       mention={targetMention(notifications, 'boards', board.id)}
                       label={`${targetCount(notifications, 'boards', board.id)} tareas requieren tu atención`}
                     />
-                  }
+                  )}
                 />
               ))}
             </div>

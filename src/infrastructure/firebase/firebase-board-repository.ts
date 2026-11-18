@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore'
 import type {
   BoardInput,
+  BoardPatch,
   BoardRepository,
   Subscriber,
   Unsubscribe,
@@ -100,7 +101,7 @@ export class FirebaseBoardRepository implements BoardRepository {
   async update(
     workspaceId: string,
     boardId: string,
-    patch: Partial<Pick<Board, 'name' | 'description' | 'columns' | 'hiddenLabels' | 'customLabels'>>,
+    patch: BoardPatch,
   ): Promise<void> {
     const data: Record<string, unknown> = {}
     if (patch.name !== undefined) {
@@ -108,9 +109,14 @@ export class FirebaseBoardRepository implements BoardRepository {
       if (name.length < 2 || name.length > 60) {
         throw new ValidationError('El nombre del tablero debe tener entre 2 y 60 caracteres.')
       }
+      const existing = await this.list(workspaceId)
+      if (existing.some((board) => board.id !== boardId && board.name.toLowerCase() === name.toLowerCase())) {
+        throw new ConflictError(`El tablero “${name}” ya existe.`)
+      }
       data.name = name
     }
     if (patch.description !== undefined) data.description = patch.description.trim()
+    if (patch.status !== undefined) data.status = patch.status
     if (patch.columns !== undefined) data.columns = validateColumns(patch.columns)
     if (patch.hiddenLabels !== undefined) {
       data.hiddenLabels = [...new Set(patch.hiddenLabels.map((label) => label.trim()).filter(Boolean))]

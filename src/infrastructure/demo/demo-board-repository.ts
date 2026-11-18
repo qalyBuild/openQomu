@@ -1,5 +1,6 @@
 import type {
   BoardInput,
+  BoardPatch,
   BoardRepository,
   Subscriber,
   Unsubscribe,
@@ -78,7 +79,7 @@ export class DemoBoardRepository implements BoardRepository {
   async update(
     workspaceId: string,
     boardId: string,
-    patch: Partial<Pick<Board, 'name' | 'description' | 'columns' | 'hiddenLabels' | 'customLabels'>>,
+    patch: BoardPatch,
   ): Promise<void> {
     const board = this.store.getState().boards[boardId]
     if (!board || board.workspaceId !== workspaceId) {
@@ -89,12 +90,17 @@ export class DemoBoardRepository implements BoardRepository {
       if (name.length < 2 || name.length > 60) {
         throw new ValidationError('El nombre del tablero debe tener entre 2 y 60 caracteres.')
       }
+      const existing = listBoards(this.store.getState(), workspaceId)
+      if (existing.some((candidate) => candidate.id !== boardId && candidate.name.toLowerCase() === name.toLowerCase())) {
+        throw new ConflictError(`El tablero “${name}” ya existe.`)
+      }
     }
     this.store.commit((draft) => {
       const target = draft.boards[boardId]
       if (!target) return
       if (patch.name !== undefined) target.name = patch.name.trim()
       if (patch.description !== undefined) target.description = patch.description.trim()
+      if (patch.status !== undefined) target.status = patch.status
       if (patch.columns !== undefined) target.columns = validateColumns(patch.columns)
       if (patch.hiddenLabels !== undefined) {
         target.hiddenLabels = [...new Set(patch.hiddenLabels.map((label) => label.trim()).filter(Boolean))]

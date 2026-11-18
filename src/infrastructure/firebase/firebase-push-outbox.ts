@@ -1,6 +1,7 @@
-import { addDoc, collection } from 'firebase/firestore'
+import { addDoc, collection, doc, getDocFromServer } from 'firebase/firestore'
 import type { PushOutbox } from '@/domain/ports'
 import type { PushEvent } from '@/domain/entities/push'
+import { isBoardMuted } from '@/domain/entities/kanban'
 import { createPushEvent } from '@/domain/services/push-service'
 import { getFirebaseAuth, getFirebaseDb } from './client'
 import { readPushUrl } from './config'
@@ -11,12 +12,17 @@ import { nowIso } from './firestore-utils'
  * Si la llamada falla, el cron del Worker procesa el evento igualmente.
  */
 export class FirebasePushOutbox implements PushOutbox {
-  async enqueue(event: PushEvent): Promise<string> {
+  async enqueue(event: PushEvent): Promise<string | null> {
     const normalized = createPushEvent({
       ...event,
       now: event.createdAt,
     })
-    const reference = await addDoc(collection(getFirebaseDb(), 'pushOutbox'), {
+    const database = getFirebaseDb()
+    if (normalized.boardId) {
+      const board = await getDocFromServer(doc(database, 'workspaces', normalized.workspaceId, 'boards', normalized.boardId))
+      if (!board.exists() || isBoardMuted(board.data().status)) return null
+    }
+    const reference = await addDoc(collection(database, 'pushOutbox'), {
       kind: normalized.kind,
       workspaceId: normalized.workspaceId,
       actorId: normalized.actorId,
