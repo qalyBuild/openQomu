@@ -1,4 +1,5 @@
 import { groupBoardChoices, MUTED_BOARDS_LABEL } from '@/presentation/features/kanban/board-choices'
+import { defaultFilter } from 'cmdk'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -29,6 +30,16 @@ import { useWorkspaceData } from '@/app/workspace-data-provider'
 import { UserAvatar } from '@/presentation/components/common/user-avatar'
 import { fileKindLabel } from '@/domain/services/file-service'
 
+const MUTED_BOARD_KEYWORD = 'muted-board'
+
+function filterCommands(value: string, search: string, keywords?: string[]) {
+  const muted = keywords?.[0] === MUTED_BOARD_KEYWORD
+  const score = defaultFilter(value, search, muted ? undefined : keywords)
+  if (score === 0) return 0
+  // cmdk orders groups by their strongest match.
+  return muted ? score / 2 : (1 + score) / 2
+}
+
 interface TaskWithBoard extends Task {
   boardName: string
 }
@@ -43,6 +54,7 @@ export function CommandPalette({
   const container = useContainer()
   const { workspace, channels, boards, pages, members, files } = useWorkspaceData()
   const { active: activeBoards, muted: mutedBoards } = groupBoardChoices(boards, (board) => board.status)
+  const firstBoard = activeBoards[0] ?? mutedBoards[0]
   const navigate = useNavigate()
   const [tasks, setTasks] = useState<TaskWithBoard[]>([])
 
@@ -80,6 +92,7 @@ export function CommandPalette({
     <CommandDialog
       open={open}
       onOpenChange={onOpenChange}
+      filter={filterCommands}
       title="Buscar en openQomu"
       description="Busca canales, tableros, páginas, tareas y personas"
       className="sm:max-w-xl"
@@ -119,8 +132,8 @@ export function CommandPalette({
             onSelect={() =>
               run(() =>
                 navigate(
-                  boards[0]
-                    ? `/w/${workspace.id}/boards/${boards[0].id}`
+                  firstBoard
+                    ? `/w/${workspace.id}/boards/${firstBoard.id}`
                     : `/w/${workspace.id}/boards`,
                 ),
               )
@@ -187,6 +200,7 @@ export function CommandPalette({
                 <CommandItem
                   key={board.id}
                   value={`tablero ${board.name} ${board.description}`}
+                  keywords={group === mutedBoards ? [MUTED_BOARD_KEYWORD] : undefined}
                   onSelect={() =>
                     run(() => navigate(`/w/${workspace.id}/boards/${board.id}`))
                   }
