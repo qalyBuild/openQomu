@@ -99,7 +99,8 @@ service cloud.firestore {
 
     // ---------- Usuarios ----------
     match /users/{userId} {
-      allow read: if signedIn();
+      allow get: if signedIn();
+      allow list: if false;
       allow create: if signedIn() && userId == currentUid();
       allow update: if signedIn() && userId == currentUid();
       allow delete: if false;
@@ -258,10 +259,14 @@ service cloud.firestore {
         allow get: if isMember(workspaceId);
         allow list: if isMemberByWorkspace(workspaceId);
         allow create: if isMember(workspaceId)
-          && request.resource.data.createdBy == currentUid();
+          && request.resource.data.createdBy == currentUid()
+          && request.resource.data.get('status', 'normal') in ['normal', 'paused', 'deprecated'];
         allow update: if isMember(workspaceId)
           && request.resource.data.createdBy == resource.data.createdBy
-          && request.resource.data.createdAt == resource.data.createdAt;
+          && request.resource.data.createdAt == resource.data.createdAt
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['status'])
+            || ((resource.data.createdBy == currentUid() || isAdmin(workspaceId))
+              && request.resource.data.get('status', 'normal') in ['normal', 'paused', 'deprecated']));
         allow delete: if isAdmin(workspaceId)
           || (isMember(workspaceId) && resource.data.createdBy == currentUid());
 
@@ -419,7 +424,7 @@ service cloud.firestore {
     match /invites/{code} {
       // El código es el secreto: conocerlo permite leer la invitación (también sin sesión).
       allow get: if true;
-      allow list: if false;
+      allow list: if signedIn() && isAdmin(resource.data.workspaceId);
       allow create: if signedIn()
         && isAdmin(request.resource.data.workspaceId)
         && request.resource.data.createdBy == currentUid()

@@ -75,6 +75,9 @@ class MemoryStore implements Store {
   async getTask() {
     return this.task
   }
+  async getBoard() {
+    return {}
+  }
   async listDevices(uid: string) {
     return this.devices.get(uid) ?? []
   }

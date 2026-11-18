@@ -237,6 +237,17 @@ export class DemoWorkspaceRepository implements WorkspaceRepository {
     return invite
   }
 
+  async listInvites(workspaceId: string): Promise<Invite[]> {
+    return Object.values(this.store.getState().invites)
+      .filter((invite) => invite.workspaceId === workspaceId && !isInviteExpired(invite))
+  }
+
+  async revokeInvite(code: string): Promise<void> {
+    this.store.commit((draft) => {
+      delete draft.invites[code.toUpperCase()]
+    })
+  }
+
   async getInvite(code: string): Promise<Invite | null> {
     return this.store.getState().invites[code.toUpperCase()] ?? null
   }

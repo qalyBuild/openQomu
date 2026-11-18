@@ -238,6 +238,15 @@ describe('workspaces y membresías', () => {
     await assertFails(getDoc(doc(dbFor(BOB), 'workspaces', WS)))
   })
 
+  it('impide enumerar perfiles y conserva la lectura individual', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'users', BOB), { displayName: 'Bob' })
+    })
+    const alice = dbFor(ALICE)
+    await assertSucceeds(getDoc(doc(alice, 'users', BOB)))
+    await assertFails(getDocs(collection(alice, 'users')))
+  })
+
   it('acepta invitaciones válidas, rechaza caducadas y lista solo con permiso', async () => {
     await seedWorkspace()
     const alice = dbFor(ALICE)
@@ -254,6 +263,20 @@ describe('workspaces y membresías', () => {
     // El enlace puede comprobarse sin sesión.
     await assertSucceeds(getDoc(doc(dbFor(), 'invites', inviteCode)))
     await assertFails(getDocs(collection(dbFor(BOB), 'invites')))
+
+    const invitesFor = (uid: string) =>
+      query(collection(dbFor(uid), 'invites'), where('workspaceId', '==', WS))
+    const ownedInvites = await assertSucceeds(getDocs(invitesFor(ALICE)))
+    expect(ownedInvites.docs.map((invite) => invite.id)).toEqual([inviteCode])
+    await assertFails(getDocs(invitesFor(BOB)))
+    await assertFails(getDocs(collection(alice, 'invites')))
+    const revokedRef = doc(alice, 'invites', 'REVOKEME12')
+    await assertSucceeds(setDoc(revokedRef, {
+      ...ownedInvites.docs[0].data(),
+    }))
+    await assertFails(deleteDoc(doc(dbFor(BOB), revokedRef.path)))
+    await assertSucceeds(deleteDoc(revokedRef))
+    expect((await getDoc(doc(dbFor(), revokedRef.path))).exists()).toBe(false)
 
     const bob = dbFor(BOB)
     await assertFails(
@@ -477,6 +500,24 @@ describe('contenido y permisos', () => {
         body: 'Editado por Bob',
       }),
     )
+  })
+
+  it('reserva el estado del tablero al creador y a los administradores del espacio', async () => {
+    await seedWorkspace()
+    const aliceBoard = doc(dbFor(ALICE), 'workspaces', WS, 'boards', 'board-1')
+    const bobView = doc(dbFor(BOB), 'workspaces', WS, 'boards', 'board-1')
+    const bobBoard = doc(dbFor(BOB), 'workspaces', WS, 'boards', 'board-bob')
+    await assertSucceeds(updateDoc(aliceBoard, { status: 'paused' }))
+    await assertFails(updateDoc(bobView, { status: 'normal' }))
+    await assertFails(updateDoc(aliceBoard, { status: 'unknown' }))
+    await assertSucceeds(updateDoc(bobView, { description: 'Edición de metadatos existente' }))
+    await assertSucceeds(setDoc(bobBoard, {
+      name: 'Tablero de Bob',
+      createdBy: BOB,
+      createdAt: new Date().toISOString(),
+    }))
+    await assertSucceeds(updateDoc(bobBoard, { status: 'deprecated' }))
+    await assertSucceeds(updateDoc(doc(dbFor(ALICE), bobBoard.path), { status: 'normal' }))
   })
 
   it('permite cascadas al creador del contenedor', async () => {
