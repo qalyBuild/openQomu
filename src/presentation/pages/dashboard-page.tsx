@@ -35,7 +35,7 @@ import { isRecentlyActive } from '@/lib/presence'
 import { UserAvatar, AvatarStack } from '@/presentation/components/common/user-avatar'
 import { EmptyState } from '@/presentation/components/common/empty-state'
 import { DueDateBadge, PriorityBadge } from '@/presentation/components/common/badges'
-import { CreateBoardDialog } from '@/presentation/features/kanban/create-board-dialog'
+import { BoardDialog } from '@/presentation/features/kanban/board-dialog'
 import { EvilAreaChart } from '@/components/evilcharts/charts/recharts-area-chart'
 import { EvilBarChart } from '@/components/evilcharts/charts/recharts-bar-chart'
 import { EvilPieChart } from '@/components/evilcharts/charts/recharts-pie-chart'
@@ -167,7 +167,7 @@ export function DashboardPage() {
             title="Crea tu primer tablero"
             description="Las tareas, responsables y fechas aparecerán aquí en un dashboard vivo."
             action={
-              <CreateBoardDialog
+              <BoardDialog
                 trigger={
                   <Button>
                     <Sparkles className="size-4" /> Crear tablero

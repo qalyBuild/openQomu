@@ -157,6 +157,10 @@ export interface BoardInput {
   columns?: BoardColumn[]
 }
 
+export type BoardPatch = Partial<Pick<Board,
+  'name' | 'description' | 'status' | 'columns' | 'hiddenLabels' | 'customLabels'
+>>
+
 export interface BoardRepository {
   list(workspaceId: string): Promise<Board[]>
   subscribe(workspaceId: string, callback: Subscriber<Board[]>): Unsubscribe
@@ -164,7 +168,7 @@ export interface BoardRepository {
   update(
     workspaceId: string,
     boardId: string,
-    patch: Partial<Pick<Board, 'name' | 'description' | 'columns' | 'hiddenLabels' | 'customLabels'>>,
+    patch: BoardPatch,
   ): Promise<void>
   remove(workspaceId: string, boardId: string): Promise<void>
 }
@@ -331,7 +335,7 @@ export interface DeviceRepository {
 
 export interface PushOutbox {
   /** Persiste el evento para que el Worker lo entregue. Devuelve su id. */
-  enqueue(event: PushEvent): Promise<string>
+  enqueue(event: PushEvent): Promise<string | null>
   /** Intenta entregar ya; si falla, el cron del Worker lo reintentará. */
   dispatch(outboxId: string): Promise<void>
 }

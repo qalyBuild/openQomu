@@ -20,7 +20,7 @@ async function publish(outbox: PushOutbox, input: Parameters<typeof createPushEv
     const event = createPushEvent(input)
     if (event.kind === 'task.updated' && !isNotifiableTaskUpdate(event)) return
     const id = await outbox.enqueue(event)
-    void outbox.dispatch(id)
+    if (id) void outbox.dispatch(id)
   } catch (error) {
     // Un fallo de push nunca debe romper la acción del usuario.
     console.warn('[openqomu] no se pudo encolar la notificación', error)

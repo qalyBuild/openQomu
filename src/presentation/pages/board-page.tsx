@@ -20,6 +20,7 @@ import {
   Filter,
   KanbanSquare,
   MoreHorizontal,
+  Pencil,
   Plus,
   Search,
   Settings2,
@@ -74,6 +75,8 @@ import { TaskCreateDialog } from '@/presentation/features/kanban/task-create-dia
 import { LabelManagerDialog } from '@/presentation/features/kanban/label-manager-dialog'
 import { TaskDetailSheet } from '@/presentation/features/kanban/task-detail-sheet'
 import { ColumnManagerDialog } from '@/presentation/features/kanban/column-manager-dialog'
+import { BoardDialog } from '@/presentation/features/kanban/board-dialog'
+import { BoardStatusBadge } from '@/presentation/features/kanban/board-status-badge'
 import { isRecentlyActive } from '@/lib/presence'
 
 const collisionDetection: CollisionDetection = (args) => {
@@ -116,6 +119,7 @@ export function BoardPage() {
   const [createColumnId, setCreateColumnId] = useState<string>('')
   const [columnsOpen, setColumnsOpen] = useState(false)
   const [labelsOpen, setLabelsOpen] = useState(false)
+  const [editingBoardId, setEditingBoardId] = useState<string | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   const canManage = can('board.manage') || board?.createdBy === uid
@@ -293,6 +297,7 @@ export function BoardPage() {
     <div className="flex h-full min-h-0 flex-col">
       <div className="shrink-0 border-b border-border/70 px-4 py-2 sm:px-5">
         <div className="scrollbar-none flex items-center gap-2 overflow-x-auto">
+          <BoardStatusBadge status={board.status} />
           <div className="relative shrink-0">
             <Search className="absolute start-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -418,6 +423,9 @@ export function BoardPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setEditingBoardId(board.id)}>
+                    <Pencil className="size-4" /> Editar tablero
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setLabelsOpen(true)}>
                     <Tag className="size-4" /> Gestionar etiquetas
                   </DropdownMenuItem>
@@ -556,6 +564,12 @@ export function BoardPage() {
         onOpenChange={setColumnsOpen}
         board={board}
         tasks={tasks}
+      />
+
+      <BoardDialog
+        board={board}
+        open={canManage && editingBoardId === board.id}
+        onOpenChange={(open) => setEditingBoardId(open ? board.id : null)}
       />
 
       <ConfirmDialog

@@ -11,7 +11,7 @@ import {
 import { useLocation } from 'react-router-dom'
 import type { Message } from '@/domain/entities/chat'
 import type { TaskComment } from '@/domain/entities/kanban'
-import { isDependentsColumn } from '@/domain/entities/kanban'
+import { isBoardMuted, isDependentsColumn } from '@/domain/entities/kanban'
 import {
   collectActivityNotifications,
   collectCommentNotifications,
@@ -265,7 +265,15 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       uid,
     ],
   )
-  const summary = useMemo(() => summarizeNotifications(items), [items])
+  const mutedBoardIds = useMemo(
+    () => new Set(boards.filter((board) => isBoardMuted(board.status)).map((board) => board.id)),
+    [boards],
+  )
+  const visibleItems = useMemo(
+    () => items.filter((item) => item.section !== 'boards' || !mutedBoardIds.has(item.targetId)),
+    [items, mutedBoardIds],
+  )
+  const summary = useMemo(() => summarizeNotifications(visibleItems), [visibleItems])
   const itemIds = useMemo(() => items.map((item) => item.id), [items])
 
   // --- Sonido --------------------------------------------------------------
@@ -329,14 +337,15 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       setState((current) => setSeenNotificationIds(current, itemIds))
       return
     }
-    const fresh = newNotificationIds([...seenIds.current], items)
+    const fresh = newNotificationIds([...seenIds.current], visibleItems)
     // En el APK el sonido lo pone la notificación nativa: evitar el doble aviso.
     if (fresh.length > 0 && soundEnabledRef.current && !isNativeApp()) {
       playNotificationSound(audioContext.current, volumeRef.current, soundIdRef.current)
     }
+    // Conserva también los IDs silenciados para evitar sonidos atrasados al reactivar.
     seenIds.current = new Set(itemIds)
     setState((current) => setSeenNotificationIds(current, itemIds))
-  }, [itemIds, items, loading])
+  }, [itemIds, visibleItems, loading])
 
   const toggleSound = useCallback(() => {
     setState((current) => setSoundEnabled(current, !current.soundEnabled))
