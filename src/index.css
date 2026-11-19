@@ -243,14 +243,6 @@
   .mask-fade-b {
     mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
   }
-  .theme-glass [data-slot="card"],
-  .theme-glass [data-slot="dialog-content"],
-  .theme-glass [data-slot="alert-dialog-content"],
-  .theme-glass [data-slot="sheet-content"],
-  .theme-glass .glass {
-    backdrop-filter: blur(18px) saturate(1.35);
-    -webkit-backdrop-filter: blur(18px) saturate(1.35);
-  }
   .theme-glow [data-slot="card"] {
     box-shadow: 0 30px 80px -60px var(--surface-glow);
   }

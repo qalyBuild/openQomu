@@ -154,7 +154,7 @@ export function TaskCard({
   review?: boolean
   dependencies?: Task[]
   dependents?: boolean
-  onClick: () => void
+  onClick: (trigger: HTMLElement) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -176,7 +176,15 @@ export function TaskCard({
         if (isDragging) return
         const target = event.target as HTMLElement
         if (target.closest('button, a')) return
-        onClick()
+        onClick(event.currentTarget)
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' && event.target === event.currentTarget && !isDragging) {
+          event.preventDefault()
+          onClick(event.currentTarget)
+          return
+        }
+        listeners?.onKeyDown?.(event)
       }}
       className="cursor-grab touch-manipulation active:cursor-grabbing"
       aria-label={`Tarea: ${task.title}`}

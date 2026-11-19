@@ -23,7 +23,9 @@ import {
 } from '@/domain/services/notification-service'
 import { isTaskCompleted } from '@/domain/services/task-service'
 import {
+  advanceFileRead,
   defaultNotificationState,
+  legacyFileVisit,
   loadNotificationState,
   markNotificationRead,
   saveNotificationState,
@@ -38,6 +40,7 @@ import { isNativeApp } from '@/lib/app-url'
 import { useAuth, useContainer } from '@/app/auth-provider'
 import { useWorkspaceData } from '@/app/workspace-data-provider'
 import { useWorkspaceTasks } from '@/presentation/hooks/use-data'
+import { useFileRead } from './use-file-read'
 
 const MAX_COMMENT_SUBSCRIPTIONS = 25
 
@@ -201,12 +204,26 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         return markNotificationRead(current, `channel:${activeChannelId}`, now)
       }
       if (pathname.includes('/pages')) return markNotificationRead(current, 'pages', now)
-      if (pathname.includes('/files')) return markNotificationRead(current, 'files', now)
       if (pathname.includes('/members')) return markNotificationRead(current, 'members', now)
       if (pathname.includes('/boards')) return markNotificationRead(current, 'comments', now)
       return current
     })
   }, [activeChannelId, pathname])
+
+  const advanceFiles = useCallback((through: number) => {
+    setState((current) => advanceFileRead(current, through))
+  }, [])
+  const { ready: filesReady, through: fileReadThrough } = useFileRead({
+    repository: container.fileReads,
+    workspaceId: workspace.id,
+    uid,
+    files,
+    loading,
+    viewingFiles: pathname.replace(/\/$/, '') === `/w/${workspace.id}/files`,
+    localThrough: state.fileReadThrough ?? 0,
+    legacyVisit: legacyFileVisit(state),
+    onAdvance: advanceFiles,
+  })
 
   // Mientras el canal está abierto, lo que llega se considera leído.
   const activeLastMessageAt = latestCreatedAt(activeChannelId ? messagesByChannel[activeChannelId] : undefined)
@@ -268,10 +285,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       }),
       ...collectActivityNotifications({
         pages,
-        files,
+        files: filesReady ? files : [],
         members,
         uid,
-        lastReadAt: state.lastReadAt,
+        lastReadAt: {
+          ...state.lastReadAt,
+          files: fileReadThrough ? new Date(fileReadThrough).toISOString() : state.lastReadAt.files,
+        },
       }),
     ],
     [
@@ -280,6 +300,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       commentsByTask,
       displayName,
       files,
+      filesReady,
+      fileReadThrough,
       lastReadByChannel,
       members,
       messagesByChannel,

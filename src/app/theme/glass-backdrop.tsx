@@ -13,22 +13,36 @@ export function GlassBackdrop() {
   const quality = glass?.quality ?? 'auto'
 
   useEffect(() => {
-    if (!enabled || !canvasRef.current) return
-    setWebgl(false)
-    if (renderer === 'css') return
-    if (!window.matchMedia('(min-width: 1024px)').matches) return
-    if (window.matchMedia('(prefers-reduced-transparency: reduce)').matches) return
+    const canvas = canvasRef.current
+    if (!enabled || !canvas) return
 
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const stop = startGlassShader(canvasRef.current, {
-      lightMode: theme.scheme === 'light',
-      quality,
-      reducedMotion,
-      onDegrade: () => setWebgl(false),
-    })
-    if (!stop) return
-    setWebgl(true)
-    return stop
+    const cssOnly = window.matchMedia(
+      '(max-width: 1023px), (pointer: coarse), (prefers-reduced-transparency: reduce), (forced-colors: active)',
+    )
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    let stop: (() => void) | undefined
+    const update = () => {
+      stop?.()
+      stop = undefined
+      setWebgl(false)
+      if (renderer === 'css' || cssOnly.matches) return
+
+      stop = startGlassShader(canvas, {
+        lightMode: theme.scheme === 'light',
+        quality,
+        reducedMotion: motion.matches,
+        onDegrade: () => setWebgl(false),
+      }) ?? undefined
+      setWebgl(Boolean(stop))
+    }
+    update()
+    cssOnly.addEventListener('change', update)
+    motion.addEventListener('change', update)
+    return () => {
+      cssOnly.removeEventListener('change', update)
+      motion.removeEventListener('change', update)
+      stop?.()
+    }
   }, [enabled, quality, renderer, theme.id, theme.scheme])
 
   if (!enabled) return null

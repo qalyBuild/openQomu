@@ -1,7 +1,7 @@
 export const MAX_GLASS_SURFACES = 32
 const MIN_SURFACE_SIZE = 64
 
-export type GlassTier = 'chrome' | 'panel' | 'overlay'
+export type GlassTier = 'chrome' | 'overlay'
 
 export interface GlassSurface {
   x: number
@@ -15,19 +15,12 @@ export interface GlassSurface {
 
 const TIER_STRENGTH: Record<GlassTier, number> = {
   chrome: 1.15,
-  panel: 0.72,
   overlay: 1.3,
 }
 
 const TIER_ORDER: Record<GlassTier, number> = {
   overlay: 3,
   chrome: 2,
-  panel: 1,
-}
-
-function tierOf(element: Element): GlassTier {
-  const value = element.getAttribute('data-glass-surface')
-  return value === 'chrome' || value === 'overlay' ? value : 'panel'
 }
 
 function isVisible(element: Element) {
@@ -48,13 +41,13 @@ export function collectGlassSurfaces(
 ): GlassSurface[] {
   const surfaces: GlassSurface[] = []
   for (const element of root.querySelectorAll('[data-glass-surface]')) {
-    if (!isVisible(element)) continue
+    const tier = element.getAttribute('data-glass-surface')
+    if ((tier !== 'chrome' && tier !== 'overlay') || !isVisible(element)) continue
     const rect = element.getBoundingClientRect()
     if (rect.width < MIN_SURFACE_SIZE || rect.height < MIN_SURFACE_SIZE) continue
     if (rect.right <= 0 || rect.bottom <= 0 || rect.left >= viewport.width || rect.top >= viewport.height) {
       continue
     }
-    const tier = tierOf(element)
     const radius =
       Number.parseFloat(getComputedStyle(element).borderTopLeftRadius) || 16
     surfaces.push({

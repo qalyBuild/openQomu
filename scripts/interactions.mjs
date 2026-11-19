@@ -1,13 +1,17 @@
-import { chromium } from 'playwright-core'
+import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
+import { chromium, webkit } from 'playwright-core'
 
 const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:5173'
+const systemChrome = '/usr/bin/google-chrome-stable'
 const browser = await chromium.launch({
-  executablePath: '/usr/bin/google-chrome-stable',
+  executablePath: existsSync(systemChrome) ? systemChrome : undefined,
   headless: true,
   args: ['--no-sandbox', '--disable-dev-shm-usage'],
 })
 const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
 const page = await context.newPage()
+page.setDefaultTimeout(15000)
 const errors = []
 page.on('console', (message) => {
   if (message.type() === 'error') errors.push(`console: ${message.text()}`)
@@ -15,16 +19,114 @@ page.on('console', (message) => {
 page.on('pageerror', (error) => errors.push(`pageerror: ${error.message}`))
 
 async function login(target = page) {
-  await target.goto(BASE, { waitUntil: 'networkidle' })
-  await target.getByRole('button', { name: /Entrar a la demo/i }).first().click()
+  await target.goto(`${BASE}/?demo=1`)
   await target.waitForURL(/\/w\//, { timeout: 20000 })
-  await target.waitForTimeout(1200)
   return new URL(target.url()).pathname.split('/')[2]
 }
 
 try {
   const workspaceId = await login()
+  if (process.argv.includes('--file-reads')) {
+    await checkFileReads(workspaceId)
+  } else {
+    await checkThemes(workspaceId)
+    if (!process.argv.includes('--themes')) await checkInteractions(workspaceId)
+  }
+  if (errors.some((error) => error.startsWith('pageerror:'))) throw new Error(errors.join('\n'))
+  console.log('\nERRORES DE CONSOLA:', errors.length ? errors : 'ninguno')
+} catch (error) {
+  console.error('\nINTERACTIONS FAILED:', error)
+  await page.screenshot({ path: '/tmp/openqomu-interactions-failure.png' })
+  console.log('ERRORES:', errors)
+  process.exitCode = 1
+} finally {
+  await browser.close()
+}
 
+async function checkThemes(workspaceId) {
+  // --- Apertura de tareas con temas ---
+  const boardUrl = `${BASE}/w/${workspaceId}/boards/b-producto`
+  const themedCard = page.locator('[data-task-id="t-1"]')
+  const detail = page.getByRole('dialog', { name: 'Detalle de la tarea' })
+  const verifyDetail = async (target) => {
+    const sheet = target.getByRole('dialog', { name: 'Detalle de la tarea' })
+    await sheet.locator('.task-title-input').waitFor()
+    assert.equal(await sheet.evaluate((element) => getComputedStyle(element).position), 'fixed')
+    assert.match(await sheet.locator('.task-title-input').inputValue(), /alcance de la beta/i)
+  }
+
+  await page.evaluate(() => {
+    localStorage.setItem('openqomu.themes.installed', JSON.stringify([{
+      id: 'prueba-personalizada', name: 'Prueba personalizada', scheme: 'light',
+      version: 1, author: 'Pruebas', license: 'AGPL-3.0', tokens: { background: '#fff', foreground: '#123', primary: '#284f7a' },
+    }]))
+  })
+  async function applyTheme(target, id) {
+    const workspace = new URL(target.url()).pathname.split('/')[2]
+    await target.goto(`${BASE}/w/${workspace}/themes`)
+    const card = target.locator(`[data-theme-id="${id}"]`).first()
+    const button = card.getByRole('button', { name: 'Aplicar', exact: true })
+    await button.click()
+    await target.waitForFunction((value) => document.documentElement.dataset.theme === value, id)
+  }
+  for (const id of ['liquid-glass-light', 'liquid-glass-dark', 'qomu-light', 'prueba-personalizada', 'qomu-dark']) {
+    await applyTheme(page, id)
+    await page.goto(boardUrl)
+    await page.waitForFunction((value) => document.documentElement.dataset.theme === value, id)
+    await themedCard.click()
+    await verifyDetail(page)
+    await page.keyboard.press('Escape')
+    await detail.waitFor({ state: 'hidden' })
+    await themedCard.press('Enter')
+    await verifyDetail(page)
+    await page.keyboard.press('Escape')
+    await detail.waitFor({ state: 'hidden' })
+    await page.waitForFunction(() => document.activeElement?.getAttribute('data-task-id') === 't-1')
+
+    await page.goto(`${boardUrl}?task=t-1`)
+    await verifyDetail(page)
+    console.log('[themes]', id)
+  }
+
+  const webkitBrowser = process.argv.includes('--webkit') ? await webkit.launch() : null
+  const touch = await (webkitBrowser ?? browser).newContext({
+    viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true,
+  })
+  try {
+    const phone = await touch.newPage()
+    phone.setDefaultTimeout(15000)
+    const phoneWorkspace = await login(phone)
+    await applyTheme(phone, 'liquid-glass-light')
+    await phone.goto(`${BASE}/w/${phoneWorkspace}/boards/b-producto`)
+    await phone.locator('[data-task-id="t-1"]').tap()
+    await verifyDetail(phone)
+    assert.equal(await phone.locator('.glass-backdrop').getAttribute('data-renderer'), 'css')
+    const surface = phone.getByRole('dialog', { name: 'Detalle de la tarea' })
+    assert.match(await surface.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return style.backdropFilter || style.webkitBackdropFilter
+    }), /blur/)
+    await phone.getByRole('button', { name: 'Cerrar', exact: true }).tap()
+    await surface.waitFor({ state: 'hidden' })
+
+    if (!webkitBrowser) {
+      const cdp = await touch.newCDPSession(phone)
+      await cdp.send('Emulation.setEmulatedMedia', {
+        features: [{ name: 'prefers-reduced-transparency', value: 'reduce' }],
+      })
+      await phone.locator('[data-task-id="t-1"]').tap()
+      await verifyDetail(phone)
+      assert.equal(await phone.locator('.glass-backdrop').isVisible(), false)
+    }
+  } finally {
+    await touch.close()
+    await webkitBrowser?.close()
+  }
+  console.log('[themes] tareas accesibles con ratón, teclado, enlace y toque')
+
+}
+
+async function checkInteractions(workspaceId) {
   // --- Drag and drop ---
   await page.goto(`${BASE}/w/${workspaceId}/boards/b-producto`)
   await page.waitForTimeout(1000)
@@ -95,7 +197,7 @@ try {
   await page.getByRole('button', { name: 'Guardar' }).click()
   await page.waitForTimeout(800)
   const privateMembers = await page.evaluate(() => {
-    const raw = localStorage.getItem('openqomu.demo.state.v1')
+    const raw = localStorage.getItem('openqomu.demo.state.v2')
     if (!raw) return []
     const envelope = JSON.parse(raw)
     return envelope.state.channels['ch-lanzamiento']?.memberIds ?? []
@@ -161,12 +263,49 @@ try {
   await mobile.waitForTimeout(900)
   await mobile.screenshot({ path: '/tmp/openqomu-17-mobile-board.png' })
 
-  console.log('\nERRORES DE CONSOLA:', errors.length ? errors : 'ninguno')
-} catch (error) {
-  console.error('\nINTERACTIONS FAILED:', error)
-  await page.screenshot({ path: '/tmp/openqomu-interactions-failure.png' })
-  console.log('ERRORES:', errors)
-  process.exitCode = 1
-} finally {
-  await browser.close()
+}
+
+async function checkFileReads(workspaceId) {
+  const dashboard = `${BASE}/w/${workspaceId}/dashboard`
+  const files = `${BASE}/w/${workspaceId}/files`
+  const otherDevice = await context.newPage()
+  otherDevice.setDefaultTimeout(15000)
+  await otherDevice.goto(dashboard)
+
+  async function addDemoFiles(count) {
+    await page.evaluate(({ workspaceId, count }) => {
+      const stateKey = 'openqomu.demo.state.v2'
+      const demo = JSON.parse(localStorage.getItem(stateKey))
+      const sample = Object.values(demo.state.files)[0]
+      const through = Math.max(Date.now(), ...Object.values(demo.state.files).map(
+        (file) => Date.parse(file.createdAt) + 1,
+      ))
+      for (let index = 0; index < count; index += 1) {
+        const id = `file-test-${through}-${index}`
+        demo.state.files[id] = {
+          ...sample, id, workspaceId, name: `Prueba ${id}.txt`, folderId: null,
+          uploadedBy: 'u-ana', trashedAt: null, createdAt: new Date(through).toISOString(),
+        }
+      }
+      localStorage.setItem(stateKey, JSON.stringify(demo))
+    }, { workspaceId, count })
+    await page.reload()
+  }
+
+  await addDemoFiles(105)
+  const fileBadge = otherDevice.getByRole('status', { name: /avisos en Archivos/ })
+  await fileBadge.waitFor()
+  assert.equal(await fileBadge.textContent(), '99+')
+  await page.bringToFront()
+  await page.goto(files)
+  await fileBadge.waitFor({ state: 'hidden' })
+  await otherDevice.reload()
+  await otherDevice.getByRole('link', { name: 'Archivos', exact: true }).waitFor()
+  assert.equal(await fileBadge.count(), 0)
+
+  await page.goto(dashboard)
+  await addDemoFiles(1)
+  await fileBadge.waitFor()
+  assert.equal(await fileBadge.textContent(), '1')
+  console.log('[file-reads] 99+ → 0 en otra sesión, persiste tras recarga y un archivo nuevo vuelve a sumar')
 }

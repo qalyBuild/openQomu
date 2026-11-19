@@ -72,6 +72,7 @@ export function TaskDetailSheet({
   role,
   suggestedLabels = [],
   onClose,
+  onCloseAutoFocus,
   onTransferred,
 }: {
   task: Task | null
@@ -82,6 +83,7 @@ export function TaskDetailSheet({
   role: Role
   suggestedLabels?: string[]
   onClose: () => void
+  onCloseAutoFocus: (event: Event) => void
   onTransferred: (task: Task, target: { workspaceId: string; boardId: string }) => void
 }) {
   const container = useContainer()
@@ -102,6 +104,7 @@ export function TaskDetailSheet({
   const [editingComment, setEditingComment] = useState<TaskComment | null>(null)
   const commentInputRef = useRef<HTMLTextAreaElement | null>(null)
   const commentComposerRef = useRef<HTMLDivElement | null>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { comments } = useTaskComments(workspace.id, board.id, task?.id)
   const lastOwnComment = useMemo(() => {
@@ -349,7 +352,11 @@ export function TaskDetailSheet({
       <SheetContent
         showCloseButton={false}
         className="flex w-full flex-col gap-0 p-0 sm:max-w-xl"
-        onOpenAutoFocus={(event) => event.preventDefault()}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault()
+          closeButtonRef.current?.focus()
+        }}
+        onCloseAutoFocus={onCloseAutoFocus}
         onEscapeKeyDown={(event) => {
           if (editingComment) {
             event.preventDefault()
@@ -419,6 +426,7 @@ export function TaskDetailSheet({
               variant="ghost"
               size="icon"
               className="size-7 text-muted-foreground"
+              ref={closeButtonRef}
               onClick={onClose}
               aria-label="Cerrar"
             >

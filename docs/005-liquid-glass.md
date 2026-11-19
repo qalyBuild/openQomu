@@ -1,78 +1,26 @@
 # 005 · Liquid Glass
 
-## Concepto
+See the [Spanish version](005-liquid-glass.es.md) for the same specification.
 
-Un tema puede declarar el efecto `glass`. El material se dibuja con cuatro
-capas:
+openQomu's web material is inspired by [Apple's materials guidelines](https://developer.apple.com/design/human-interface-guidelines/materials). Translucency and refraction distinguish navigation and floating controls from content. Apple's native material is available through its [platform frameworks](https://developer.apple.com/documentation/technologyoverviews/liquid-glass).
 
-1. Malla de fondo fija.
-2. Material CSS sobre cada superficie: tinte, blur, saturación, brillo, filo
-   especular, lensing, bloom y sombra.
-3. Lente WebGL en un solo canvas para las superficies registradas. Deforma la
-   malla de fondo, no el DOM.
-4. Capa SVG decorativa opcional en paneles grandes. El contenido queda fuera
-   del filtro.
+The web effect combines a backdrop, CSS tint and blur, a specular border, and an optional WebGL lens over the backdrop. The decoration ignores user input. Components retain their position, stacking, and focus behavior when the theme changes.
 
-El DOM nunca se distorsiona. La lente WebGL sigue el scroll, el resize y la
-apertura de overlays.
+## Theme options
 
-## Opciones del tema
+Set `options.effects` to include `glass`. The optional `options.glass` object accepts `material` (`clear`, `regular`, `frosted`), `renderer` (`auto`, `css`, `webgl`), `quality` (`auto`, `high`, `medium`, `low`), and the tint, blur, opacity, lighting, and decorative controls shown in the [complete theme example](005-liquid-glass.es.md#opciones-del-tema).
 
-```json
-"options": {
-  "effects": ["glass"],
-  "glass": {
-    "material": "regular",
-    "renderer": "auto",
-    "quality": "auto",
-    "tint": "#0b0f14",
-    "tintLight": "#ffffff",
-    "blur": 22,
-    "opacity": 0.42,
-    "saturation": 1.35,
-    "brightness": 0.76,
-    "rim": 0.75,
-    "lensing": 1,
-    "shadow": 1,
-    "lightAngle": 340,
-    "lightSpread": 110,
-    "grid": 0.22,
-    "caustics": 0.15,
-    "svg": true
-  }
-}
-```
+## Surfaces and fallbacks
 
-- `material`: `clear`, `regular`, `frosted`.
-- `renderer`: `auto`, `css`, `webgl`.
-- `quality`: `auto`, `high`, `medium`, `low`.
-- Multiplicadores 0–2. `grid` y `caustics` 0–1. Ángulos 0–360.
-- `glass` solo es válido si `effects` incluye `glass`.
+- `chrome` covers navigation, the sidebar, and the top bar. `overlay` covers dialogs, sheets, menus, popovers, selects, command menus, and tooltips.
+- Cards, fields, and other content use the selected theme colors. The lens tracks up to 32 visible surfaces and prioritizes overlays.
+- Desktop uses CSS with the WebGL lens when supported and permitted by the theme. Mobile Safari and the Android Capacitor app use CSS tint, blur and highlights. On small screens the material is adjusted for navigation and the backdrop remains static.
+- Browsers without backdrop blur use a solid background. Context loss or excessive render time switches WebGL to CSS. Reduced transparency and forced colors use opaque surfaces. Reduced motion disables continuous animation.
 
-## Superficies
+## Acceptance
 
-- `chrome`: sidebar y topbar.
-- `panel`: tarjetas y contenedores de gráficos.
-- `overlay`: diálogos, sheets, menús, popovers, select, command y tooltips.
-
-La lente mide como máximo 32 superficies visibles, priorizando `overlay`,
-`chrome` y área. Los controles pequeños se quedan solo con material CSS.
-
-## Activación
-
-- WebGL en escritorio por defecto, si el navegador lo soporta.
-- Móvil y `renderer: "css"`: material CSS.
-- `prefers-reduced-transparency` y `forced-colors`: opaco, sin lente.
-- `prefers-reduced-motion`: lente y malla estáticas.
-- Si el contexto WebGL se pierde o el frame medio supera 24 ms, se degrada a
-  CSS sin cambiar el diseño.
-
-## Criterios
-
-1. El tema Liquid Glass claro y oscuro usa material real, no solo colores.
-2. La lente sigue las tarjetas al hacer scroll.
-3. Abrir un diálogo añade su lente sin desalinear las tarjetas.
-4. Sin WebGL, el tema sigue siendo legible y elegante.
-5. Contraste AA en texto principal y secundario.
-6. Cambiar a otro tema retira canvas, filtros y variables.
-7. `typecheck`, tests, build y lint verdes.
+1. Click, tap, Enter and direct links open task details with default, custom, and glass themes. The panel stays in the viewport and tasks remain editable.
+2. Escape and Close restore focus to the task card. Space continues to start keyboard drag and drop.
+3. Navigation and content remain distinct in light and dark schemes. The lens tracks scrolling and floating panels.
+4. Check AA contrast, the CSS fallback, mobile Safari, the distributed Android version, accessibility settings and switching away from glass.
+5. Run `npm run interactions -- --themes` against a demo server, plus lint, type checking, tests and build.

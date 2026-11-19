@@ -2,18 +2,9 @@
 
 ## Concepto
 
-Un tema puede declarar el efecto `glass`. El material se dibuja con cuatro capas:
+openQomu ofrece un material web inspirado en las [guías de materiales de Apple](https://developer.apple.com/design/human-interface-guidelines/materials). Aplica transparencia y refracción a la navegación y a los controles flotantes para mantener el contenido en primer plano. El material nativo de Apple se ofrece mediante sus [frameworks de plataforma](https://developer.apple.com/documentation/technologyoverviews/liquid-glass).
 
-1. Malla de fondo fija.
-2. Material CSS sobre cada superficie: tinte, blur, saturación, brillo, filo
-   especular, lensing, bloom y sombra.
-3. Lente WebGL en un solo canvas para las superficies registradas. Deforma la
-   malla de fondo, no el DOM.
-4. Capa SVG decorativa opcional en paneles grandes. El contenido queda fuera
-   del filtro.
-
-El DOM nunca se distorsiona. La lente WebGL sigue el scroll, el resize y la
-apertura de overlays.
+El efecto web combina un fondo, tinte y desenfoque CSS, un borde especular y una lente WebGL opcional sobre el fondo. Los elementos decorativos quedan fuera de la interacción. El componente conserva su posición, orden de apilado y gestión de foco al cambiar de tema.
 
 ## Opciones del tema
 
@@ -50,28 +41,21 @@ apertura de overlays.
 
 ## Superficies
 
-- `chrome`: sidebar y topbar.
-- `panel`: tarjetas y contenedores de gráficos.
+- `chrome`: navegación, sidebar y topbar.
 - `overlay`: diálogos, sheets, menús, popovers, select, command y tooltips.
-
-La lente mide como máximo 32 superficies visibles, priorizando `overlay`,
-`chrome` y área. Los controles pequeños se quedan solo con material CSS.
+- Las tarjetas, campos y el resto del contenido usan los colores del tema. La lente mide hasta 32 superficies visibles y prioriza los overlays.
 
 ## Activación
 
-- WebGL en escritorio por defecto, si el navegador lo soporta.
-- Móvil y `renderer: "css"`: material CSS.
-- `prefers-reduced-transparency` y `forced-colors`: opaco, sin lente.
-- `prefers-reduced-motion`: lente y malla estáticas.
-- Si el contexto WebGL se pierde o el frame medio supera 24 ms, se degrada a
-  CSS sin cambiar el diseño.
+- Escritorio: CSS con lente WebGL si hay soporte y el renderer lo permite.
+- Safari móvil y Android (APK de Capacitor): tinte, desenfoque y borde CSS. La navegación mantiene el material con una intensidad adaptada al tamaño de pantalla.
+- Si falta soporte para desenfoque, la superficie usa un fondo sólido. Si se pierde WebGL o el tiempo medio de fotograma supera el presupuesto, se mantiene el material CSS.
+- La reducción de transparencia y los colores forzados usan superficies opacas. Con movimiento reducido se elimina la animación continua.
 
-## Criterios
+## Criterios de aceptación
 
-1. El tema Liquid Glass claro y oscuro usa material real, no solo colores.
-2. La lente sigue las tarjetas al hacer scroll.
-3. Abrir un diálogo añade su lente sin desalinear las tarjetas.
-4. Sin WebGL, el tema sigue siendo legible y elegante.
-5. Contraste AA en texto principal y secundario.
-6. Cambiar a otro tema retira canvas, filtros y variables.
-7. `typecheck`, tests, build y lint verdes.
+1. En temas predeterminados, personalizados y de vidrio, un clic, toque, Enter o un enlace directo abre el detalle de la tarea. El panel queda dentro de la ventana y el contenido se puede editar.
+2. Escape o Cerrar devuelven el foco a la tarjeta que abrió el detalle. Espacio conserva el arrastre con teclado.
+3. En claro y oscuro, el material distingue navegación y contenido. La lente sigue el desplazamiento y la apertura de overlays.
+4. Validar texto y controles con contraste AA, sin lente WebGL, en Safari móvil y en el APK de la versión distribuida. Probar los modos de accesibilidad y el cambio a un tema sin vidrio.
+5. Ejecutar `npm run interactions -- --themes` con un servidor en modo demo, además de lint, tipos, tests y build.
