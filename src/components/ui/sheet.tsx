@@ -78,6 +78,7 @@ function SheetContent({
       <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
+        data-glass-surface="overlay"
         data-side={side}
         style={{ ...safeArea, ...style }}
         className={cn(

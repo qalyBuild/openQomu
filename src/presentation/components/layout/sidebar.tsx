@@ -239,6 +239,8 @@ export function Sidebar({
 
   return (
     <div
+      data-glass-chrome="sidebar"
+      data-glass-surface="chrome"
       className="flex h-full min-h-0 flex-col bg-sidebar/80"
       onClick={(event) => {
         if ((event.target as HTMLElement).closest('a')) onNavigate?.()

@@ -24,6 +24,7 @@ function Command({
   return (
     <CommandPrimitive
       data-slot="command"
+      data-glass-surface="overlay"
       className={cn(
         "flex size-full flex-col overflow-hidden rounded-xl! bg-popover p-1 text-popover-foreground",
         className

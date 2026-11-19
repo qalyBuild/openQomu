@@ -1,0 +1,321 @@
+/* Liquid Glass. Material CSS, fondo y lente opcional. */
+
+html[data-effects~='glass'] {
+  --glass-blur: 22px;
+  --glass-saturation: 1.35;
+  --glass-brightness: 0.76;
+  --glass-tint: #0b0f14;
+  --glass-tint-light: #ffffff;
+  --glass-surface-alpha: 0.42;
+  --glass-rim-strength: 0.75;
+  --glass-lensing: 1;
+  --glass-shadow: 1;
+  --glass-light-angle: 340deg;
+  --glass-light-spread: 110deg;
+  --glass-grid: 0.22;
+  --glass-caustics: 0.15;
+}
+
+html[data-effects~='glass'] body {
+  background-color: var(--background);
+}
+
+html[data-effects~='glass'] [data-slot='app-shell'] {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+
+/* ---------------- Fondo ---------------- */
+
+.glass-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: #07090d;
+}
+
+:root:not(.dark) .glass-backdrop {
+  background: #f4f6f8;
+}
+
+.glass-backdrop-mesh {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(58% 55% at 14% 16%, oklch(0.42 0.055 235 / 0.75), transparent 68%),
+    radial-gradient(46% 50% at 86% 12%, oklch(0.46 0.05 190 / 0.5), transparent 70%),
+    radial-gradient(52% 56% at 72% 88%, oklch(0.4 0.035 255 / 0.45), transparent 72%),
+    radial-gradient(42% 44% at 28% 86%, oklch(0.52 0.03 78 / 0.18), transparent 75%),
+    linear-gradient(145deg, #0c0f14, #05070a);
+  animation: glass-drift 28s ease-in-out infinite alternate;
+}
+
+:root:not(.dark) .glass-backdrop-mesh {
+  background:
+    radial-gradient(58% 55% at 14% 16%, oklch(0.84 0.03 235 / 0.7), transparent 68%),
+    radial-gradient(46% 50% at 86% 12%, oklch(0.88 0.025 190 / 0.6), transparent 70%),
+    radial-gradient(52% 56% at 72% 88%, oklch(0.86 0.02 255 / 0.5), transparent 72%),
+    radial-gradient(42% 44% at 28% 86%, oklch(0.9 0.025 78 / 0.3), transparent 75%),
+    linear-gradient(145deg, #f8f9fb, #eef1f4);
+}
+
+.glass-backdrop-mesh::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: calc(var(--glass-grid) * 0.16);
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.4) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+:root:not(.dark) .glass-backdrop-mesh::after {
+  background-image:
+    linear-gradient(rgb(20 30 40 / 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(20 30 40 / 0.3) 1px, transparent 1px);
+}
+
+.glass-backdrop-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glass-backdrop-filter {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+@keyframes glass-drift {
+  from {
+    transform: translate3d(-1.5%, -1%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(2%, 1.5%, 0) scale(1.06);
+  }
+}
+
+/* ---------------- Superficies ---------------- */
+
+html[data-effects~='glass'] [data-glass-surface] {
+  position: relative;
+  isolation: isolate;
+  border-color: transparent !important;
+  background: color-mix(
+    in srgb,
+    var(--glass-tint) calc(var(--glass-surface-alpha) * 100%),
+    transparent
+  ) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation))
+    brightness(var(--glass-brightness));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation))
+    brightness(var(--glass-brightness));
+  box-shadow:
+    inset calc(sin(var(--glass-light-angle)) * -12px) calc(cos(var(--glass-light-angle)) * 12px)
+      20px -14px rgb(255 255 255 / calc(0.24 * var(--glass-rim-strength))),
+    inset 0 0 18px rgb(255 255 255 / calc(0.06 * var(--glass-lensing))),
+    0 1px 2px rgb(0 0 0 / calc(0.18 * var(--glass-shadow))),
+    0 18px 50px -18px rgb(0 0 0 / calc(0.55 * var(--glass-shadow)));
+}
+
+html[data-effects~='glass'] [data-glass-surface='overlay'] {
+  --glass-blur: 32px;
+  background: color-mix(
+    in srgb,
+    var(--glass-tint) calc(min(0.88, var(--glass-surface-alpha) + 0.16) * 100%),
+    transparent
+  ) !important;
+  box-shadow:
+    inset calc(sin(var(--glass-light-angle)) * -14px) calc(cos(var(--glass-light-angle)) * 14px)
+      24px -16px rgb(255 255 255 / calc(0.3 * var(--glass-rim-strength))),
+    inset 0 0 22px rgb(255 255 255 / calc(0.08 * var(--glass-lensing))),
+    0 2px 6px rgb(0 0 0 / 0.24),
+    0 32px 80px -20px rgb(0 0 0 / calc(0.65 * var(--glass-shadow)));
+}
+
+html[data-effects~='glass'] [data-glass-surface='chrome'] {
+  --glass-blur: 30px;
+  --glass-saturation: 1.5;
+  background: color-mix(
+    in srgb,
+    var(--glass-tint) calc(min(0.9, var(--glass-surface-alpha) + 0.1) * 100%),
+    transparent
+  ) !important;
+}
+
+html[data-effects~='glass'] [data-glass-chrome='sidebar'] {
+  box-shadow:
+    inset -1px 0 0 rgb(255 255 255 / calc(0.12 * var(--glass-rim-strength))),
+    inset -18px 0 40px -30px rgb(255 255 255 / 0.3);
+}
+
+html[data-effects~='glass'] [data-glass-chrome='topbar'] {
+  border-color: rgb(255 255 255 / 0.1) !important;
+  box-shadow:
+    inset 0 -1px 0 rgb(255 255 255 / calc(0.1 * var(--glass-rim-strength))),
+    inset 0 16px 30px -28px rgb(255 255 255 / 0.4);
+}
+
+html[data-effects~='glass'] [data-glass-surface]::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    conic-gradient(
+      from calc(var(--glass-light-angle) - var(--glass-light-spread) / 2),
+      transparent 0deg,
+      rgb(255 255 255 / calc(0.9 * var(--glass-rim-strength)))
+        calc(var(--glass-light-spread) / 2),
+      transparent var(--glass-light-spread),
+      transparent 180deg,
+      rgb(255 255 255 / calc(0.3 * var(--glass-rim-strength)))
+        calc(180deg + var(--glass-light-spread) / 2),
+      transparent calc(180deg + var(--glass-light-spread))
+    ),
+    linear-gradient(rgb(255 255 255 / 0.12), rgb(255 255 255 / 0.12));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+
+html[data-effects~='glass'][data-glass-svg='on']
+  :is([data-glass-surface='chrome'], [data-glass-surface='overlay'])::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: calc(var(--glass-grid) * 0.6);
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.35) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.35) 1px, transparent 1px),
+    radial-gradient(circle at 30% 20%, rgb(255 255 255 / 0.5), transparent 55%);
+  background-size:
+    48px 48px,
+    48px 48px,
+    100% 100%;
+  filter: url('#glass-refraction');
+  mix-blend-mode: soft-light;
+}
+
+html[data-effects~='glass'] [data-slot='dialog-overlay'] {
+  background: rgb(3 5 8 / 0.34) !important;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* ---------------- Controles ---------------- */
+
+html[data-effects~='glass'] [data-slot='button'][data-variant='outline'],
+html[data-effects~='glass'] [data-slot='button'][data-variant='secondary'],
+html[data-effects~='glass'] [data-slot='button'][data-variant='ghost'] {
+  border-color: rgb(255 255 255 / 0.14) !important;
+  background: rgb(255 255 255 / 0.09) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+  backdrop-filter: blur(10px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 1px 3px rgb(0 0 0 / 0.18);
+}
+
+:root:not(.dark) [data-slot='button'][data-variant='outline'],
+:root:not(.dark) [data-slot='button'][data-variant='secondary'],
+:root:not(.dark) [data-slot='button'][data-variant='ghost'] {
+  border-color: rgb(24 34 46 / 0.12) !important;
+  background: rgb(255 255 255 / 0.5) !important;
+}
+
+html[data-effects~='glass'] [data-slot='button'][data-variant='ghost'] {
+  background: transparent !important;
+  box-shadow: none;
+}
+
+html[data-effects~='glass'] [data-slot='button'][data-variant='ghost']:hover {
+  background: rgb(255 255 255 / 0.1) !important;
+}
+
+html[data-effects~='glass'] [data-slot='button'][data-variant='default'] {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    0 2px 8px -2px rgb(0 0 0 / 0.4);
+}
+
+html[data-effects~='glass']
+  :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']) {
+  background: rgb(0 0 0 / 0.22) !important;
+  border-color: rgb(255 255 255 / 0.12) !important;
+  box-shadow:
+    inset 0 1px 2px rgb(0 0 0 / 0.3),
+    inset 0 0 0 0.5px rgb(255 255 255 / 0.06),
+    inset 0 -1px 0 rgb(255 255 255 / 0.06);
+}
+
+:root:not(.dark) [data-slot='input'],
+:root:not(.dark) [data-slot='textarea'],
+:root:not(.dark) [data-slot='select-trigger'] {
+  background: rgb(24 32 44 / 0.06) !important;
+  border-color: rgb(24 32 44 / 0.1) !important;
+}
+
+html[data-effects~='glass'] [data-slot='tabs-list'] {
+  background: rgb(0 0 0 / 0.2) !important;
+  border-color: rgb(255 255 255 / 0.08) !important;
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.24);
+}
+
+html[data-effects~='glass'] [data-slot='tabs-trigger'][data-state='active'] {
+  background: rgb(255 255 255 / 0.12) !important;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.24),
+    0 2px 8px -3px rgb(0 0 0 / 0.35);
+}
+
+/* ---------------- Fallbacks ---------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-backdrop-mesh {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html[data-effects~='glass'] [data-glass-surface] {
+    background: var(--card) !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .glass-backdrop-canvas {
+    display: none;
+  }
+}
+
+@media (forced-colors: active) {
+  html[data-effects~='glass'] [data-glass-surface] {
+    background: Canvas !important;
+    border: 1px solid CanvasText !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html[data-effects~='glass'] [data-glass-surface] {
+    background: var(--card) !important;
+  }
+}

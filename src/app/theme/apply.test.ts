@@ -69,6 +69,35 @@ describe('applyTheme', () => {
     expect(readThemeCache()).toBeNull()
   })
 
+  it('aplica y retira las variables de glass', () => {
+    const glassTheme = resolveTheme({
+      id: 'liquid-glass-dark',
+      name: 'Liquid Glass',
+      scheme: 'dark',
+      version: 1,
+      author: 'Qomu',
+      license: 'AGPL-3.0',
+      tokens: {},
+      options: {
+        effects: ['glass'],
+        glass: { material: 'frosted', blur: 30, tint: '#101418', grid: 0.4, svg: true },
+      },
+    })
+    applyTheme(glassTheme)
+    const root = document.documentElement
+    expect(root.dataset.effects).toBe('glass')
+    expect(root.dataset.glassMaterial).toBe('frosted')
+    expect(root.dataset.glassRenderer).toBe('auto')
+    expect(root.dataset.glassSvg).toBe('on')
+    expect(root.style.getPropertyValue('--glass-blur')).toBe('30px')
+    expect(root.style.getPropertyValue('--glass-tint')).toBe('#101418')
+
+    applyTheme(lightTheme)
+    expect(root.dataset.effects).toBe('')
+    expect(root.dataset.glassMaterial).toBeUndefined()
+    expect(root.style.getPropertyValue('--glass-blur')).toBe('')
+  })
+
   it('clearTheme retira todo lo aplicado', () => {
     applyTheme(darkTheme)
     clearTheme()

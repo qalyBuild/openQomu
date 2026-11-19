@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { parseThemeFile, serializeTheme, validateThemeInput } from './validate'
 import type { ThemeInput } from './tokens'
+import type { GlassOptions } from './glass'
 
 function validTheme(overrides: Partial<ThemeInput> = {}): Record<string, unknown> {
   return {
@@ -88,6 +89,47 @@ describe('validateThemeInput', () => {
     expect(parseThemeFile('{').ok).toBe(false)
     expect(parseThemeFile('[]').ok).toBe(false)
     expect(parseThemeFile('x'.repeat(33 * 1024)).ok).toBe(false)
+  })
+
+  it('valida las opciones de glass', () => {
+    const glass: GlassOptions = {
+      material: 'regular',
+      renderer: 'auto',
+      quality: 'high',
+      tint: '#0b0f14',
+      tintLight: '#ffffff',
+      blur: 22,
+      opacity: 0.42,
+      saturation: 1.35,
+      brightness: 0.76,
+      rim: 0.75,
+      lensing: 1,
+      shadow: 1,
+      lightAngle: 340,
+      lightSpread: 110,
+      grid: 0.22,
+      caustics: 0.15,
+      svg: true,
+    }
+    expect(
+      validateThemeInput(validTheme({ options: { effects: ['glass'], glass } })).ok,
+    ).toBe(true)
+    expect(validateThemeInput(validTheme({ options: { glass } })).ok).toBe(false)
+    expect(
+      validateThemeInput(validTheme({ options: { effects: ['glass'], glass: { ...glass, material: 'metal' as GlassOptions['material'] } } })).ok,
+    ).toBe(false)
+    expect(
+      validateThemeInput(validTheme({ options: { effects: ['glass'], glass: { ...glass, blur: 90 } } })).ok,
+    ).toBe(false)
+    expect(
+      validateThemeInput(validTheme({ options: { effects: ['glass'], glass: { ...glass, grid: 2 } } })).ok,
+    ).toBe(false)
+    expect(
+      validateThemeInput(validTheme({ options: { effects: ['glass'], glass: { ...glass, tint: 'url(x)' } } })).ok,
+    ).toBe(false)
+    expect(
+      validateThemeInput(validTheme({ options: { effects: ['glass'], glass: { ...glass, extra: true } as GlassOptions } })).ok,
+    ).toBe(false)
   })
 
   it('serializa y vuelve a leer un tema', () => {
