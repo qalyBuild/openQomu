@@ -78,7 +78,10 @@ const BUILTIN_INPUTS: ThemeInput[] = [
       'surface-glow': 'oklch(0.58 0.19 255 / 0.18)',
       overlay: 'oklch(0.15 0.03 255 / 0.18)',
     },
-    options: { effects: ['glass'] },
+    options: {
+      effects: ['glass'],
+      glass: { material: 'regular', grid: 0.22, caustics: 0.15, svg: true },
+    },
   },
   {
     id: 'liquid-glass-dark',
@@ -125,7 +128,10 @@ const BUILTIN_INPUTS: ThemeInput[] = [
       'surface-glow': 'oklch(0.72 0.14 250 / 0.22)',
       overlay: 'oklch(0 0 0 / 0.3)',
     },
-    options: { effects: ['glass'] },
+    options: {
+      effects: ['glass'],
+      glass: { material: 'regular', grid: 0.22, caustics: 0.15, svg: true },
+    },
   },
   {
     id: 'monokai',

@@ -1,8 +1,10 @@
+import { glassCssVars } from './glass'
 import { THEME_EFFECTS, type Theme, type ThemeScheme } from './tokens'
 
 export const THEME_CACHE_KEY = 'openqomu.theme.cache'
 const EFFECT_CLASSES = THEME_EFFECTS.map((effect) => `theme-${effect}`)
 let appliedTokens: string[] = []
+let appliedGlassTokens: string[] = []
 
 export interface ThemeCache {
   id: string
@@ -48,6 +50,13 @@ export function clearTheme() {
   root.classList.remove('dark')
   root.removeAttribute('data-theme')
   root.removeAttribute('data-font')
+  root.removeAttribute('data-effects')
+  root.removeAttribute('data-glass-material')
+  root.removeAttribute('data-glass-renderer')
+  root.removeAttribute('data-glass-quality')
+  root.removeAttribute('data-glass-svg')
+  for (const token of appliedGlassTokens) root.style.removeProperty(token)
+  appliedGlassTokens = []
   root.style.colorScheme = ''
   document.body.classList.remove(...EFFECT_CLASSES)
 }
@@ -64,6 +73,24 @@ export function applyTheme(theme: Theme) {
   root.style.colorScheme = theme.scheme
   root.dataset.theme = theme.id
   root.dataset.font = theme.options.font
+  root.dataset.effects = theme.options.effects.join(' ')
+
+  for (const token of appliedGlassTokens) root.style.removeProperty(token)
+  appliedGlassTokens = []
+  if (theme.options.glass) {
+    const vars = glassCssVars(theme.options.glass)
+    appliedGlassTokens = Object.keys(vars)
+    for (const [token, value] of Object.entries(vars)) root.style.setProperty(token, value)
+    root.dataset.glassMaterial = theme.options.glass.material
+    root.dataset.glassRenderer = theme.options.glass.renderer
+    root.dataset.glassQuality = theme.options.glass.quality
+    root.dataset.glassSvg = theme.options.glass.svg ? 'on' : 'off'
+  } else {
+    delete root.dataset.glassMaterial
+    delete root.dataset.glassRenderer
+    delete root.dataset.glassQuality
+    delete root.dataset.glassSvg
+  }
 
   document.body.classList.remove(...EFFECT_CLASSES)
   for (const effect of theme.options.effects) document.body.classList.add(`theme-${effect}`)

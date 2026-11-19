@@ -8,6 +8,7 @@ import type { AppContainer } from '@/domain/ports'
 import { ContainerProvider, AuthProvider, useAuth } from './auth-provider'
 import { ThemeProvider, useTheme } from './theme-provider'
 import { ThemeProfileSync } from './theme-profile-sync'
+import { GlassBackdrop } from './theme/glass-backdrop'
 import { WorkspacesProvider, useWorkspaces } from './workspaces-provider'
 import { MobileRuntime } from './mobile-runtime'
 import { ErrorBoundary } from './error-boundary'
@@ -135,6 +136,7 @@ export function App({ container }: { container: AppContainer }) {
   return (
     <ErrorBoundary>
       <ThemeProvider>
+        <GlassBackdrop />
         <ContainerProvider container={container}>
           <AuthProvider>
             <ThemeProfileSync />

@@ -1,4 +1,12 @@
 import {
+  GLASS_MATERIALS,
+  GLASS_NUMBER_RANGES,
+  GLASS_OPTION_KEYS,
+  GLASS_QUALITIES,
+  GLASS_RENDERERS,
+  type GlassOptions,
+} from './glass'
+import {
   THEME_EFFECTS,
   THEME_FONTS,
   THEME_SCHEMES,
@@ -28,7 +36,7 @@ const THEME_KEYS = new Set([
   'tokens',
   'options',
 ])
-const OPTION_KEYS = new Set(['font', 'effects'])
+const OPTION_KEYS = new Set(['font', 'effects', 'glass'])
 const CORE_TOKENS: ThemeToken[] = ['background', 'foreground']
 
 export type ValidationResult =
@@ -124,6 +132,9 @@ export function validateThemeInput(
         errors.push('Efectos duplicados.')
       }
     }
+    if (options.glass !== undefined) {
+      errors.push(...validateGlass(options.glass, options.effects))
+    }
   }
 
   if (errors.length > 0) return { ok: false, errors }
@@ -137,6 +148,52 @@ export function validateThemeInput(
       ),
     },
   }
+}
+
+function validateGlass(value: unknown, effects: unknown): string[] {
+  const errors: string[] = []
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return ['glass debe ser un objeto.']
+  }
+  if (!Array.isArray(effects) || !effects.includes('glass')) {
+    errors.push('glass requiere el efecto glass.')
+  }
+  const glass = value as Record<string, unknown>
+  for (const key of Object.keys(glass)) {
+    if (!GLASS_OPTION_KEYS.has(key as keyof GlassOptions)) errors.push(`Opción glass desconocida: ${key}.`)
+  }
+  if (glass.material !== undefined && !GLASS_MATERIALS.includes(glass.material as never)) {
+    errors.push('Material de vidrio no permitido.')
+  }
+  if (glass.renderer !== undefined && !GLASS_RENDERERS.includes(glass.renderer as never)) {
+    errors.push('Renderer de vidrio no permitido.')
+  }
+  if (glass.quality !== undefined && !GLASS_QUALITIES.includes(glass.quality as never)) {
+    errors.push('Calidad de vidrio no permitida.')
+  }
+  for (const [key, range] of Object.entries(GLASS_NUMBER_RANGES)) {
+    const current = glass[key]
+    if (current === undefined) continue
+    if (
+      typeof current !== 'number' ||
+      !Number.isFinite(current) ||
+      current < range.min ||
+      current > range.max
+    ) {
+      errors.push(`Valor de glass fuera de rango: ${key}.`)
+    }
+  }
+  for (const key of ['tint', 'tintLight'] as const) {
+    const current = glass[key]
+    if (current === undefined) continue
+    if (typeof current !== 'string' || current.length > MAX_TOKEN_VALUE || !validColor(current.trim())) {
+      errors.push(`Color de glass no permitido: ${key}.`)
+    }
+  }
+  if (glass.svg !== undefined && typeof glass.svg !== 'boolean') {
+    errors.push('svg debe ser booleano.')
+  }
+  return errors
 }
 
 export function parseThemeFile(source: string): ValidationResult {

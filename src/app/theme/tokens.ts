@@ -1,3 +1,5 @@
+import { resolveGlass, type GlassOptions, type ResolvedGlass } from './glass'
+
 export const THEME_SCHEMES = ['light', 'dark'] as const
 export type ThemeScheme = (typeof THEME_SCHEMES)[number]
 
@@ -10,6 +12,13 @@ export type ThemeEffect = (typeof THEME_EFFECTS)[number]
 export interface ThemeOptions {
   font: ThemeFont
   effects: ThemeEffect[]
+  glass?: ResolvedGlass
+}
+
+export interface ThemeOptionInput {
+  font?: ThemeFont
+  effects?: ThemeEffect[]
+  glass?: GlassOptions
 }
 
 export interface ThemeInput {
@@ -21,7 +30,7 @@ export interface ThemeInput {
   license: string
   description?: string
   tokens: Partial<ThemeTokens>
-  options?: Partial<ThemeOptions>
+  options?: ThemeOptionInput
 }
 
 export interface Theme extends Omit<ThemeInput, 'tokens' | 'options'> {
@@ -160,9 +169,14 @@ export const BASE_TOKENS: Record<ThemeScheme, ThemeTokens> = {
 export const DEFAULT_THEME_ID = 'qomu-dark'
 
 export function resolveTheme(input: ThemeInput): Theme {
+  const effects = input.options?.effects ?? []
   return {
     ...input,
     tokens: { ...BASE_TOKENS[input.scheme], ...input.tokens },
-    options: { font: 'geist', effects: [], ...input.options },
+    options: {
+      font: input.options?.font ?? 'geist',
+      effects,
+      ...(input.options?.glass ? { glass: resolveGlass(input.options.glass, input.scheme) } : {}),
+    },
   }
 }

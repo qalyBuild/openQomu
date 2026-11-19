@@ -47,7 +47,11 @@ export function Topbar({
   const [inviteOpen, setInviteOpen] = useState(false)
 
   return (
-    <header className="relative flex h-14 shrink-0 items-center gap-2 border-b border-border/70 bg-background/80 px-3 backdrop-blur-xl sm:px-5">
+    <header
+      data-glass-chrome="topbar"
+      data-glass-surface="chrome"
+      className="relative flex h-14 shrink-0 items-center gap-2 border-b border-border/70 bg-background/80 px-3 backdrop-blur-xl sm:px-5"
+    >
       <Button
         variant="ghost"
         size="icon"
