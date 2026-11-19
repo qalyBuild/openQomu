@@ -103,7 +103,7 @@ export function PagesPage() {
                   to={`/w/${workspace.id}/pages/${page.id}`}
                   className="group"
                 >
-                  <div className="flex h-full flex-col rounded-2xl border bg-card/70 p-4 transition-all group-hover:-translate-y-0.5 group-hover:border-primary/25 group-hover:shadow-lg group-hover:shadow-primary/5">
+                  <div data-glass-surface="panel" className="flex h-full flex-col rounded-2xl border bg-card/70 p-4 transition-all group-hover:-translate-y-0.5 group-hover:border-primary/25 group-hover:shadow-lg group-hover:shadow-primary/5">
                     <div className="flex items-start justify-between">
                       <span className="text-2xl leading-none">{page.icon}</span>
                       <ChevronRight className="size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />

@@ -177,7 +177,7 @@ export function BoardsPage() {
           ))
         )}
 
-        <div className="rounded-2xl border bg-muted/30 p-4">
+        <div data-glass-surface="panel" className="rounded-2xl border bg-muted/30 p-4">
           <p className="text-xs font-medium">Consejo</p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             Arrastra las tarjetas entre columnas y usa el panel de detalle para asignar responsables,

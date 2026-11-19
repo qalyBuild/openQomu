@@ -4,7 +4,7 @@ const SVG = 'http://www.w3.org/2000/svg'
 const SURFACES = [
   '[data-glass-surface="chrome"]',
   '[data-glass-surface="overlay"]',
-  '[data-glass-dashboard] [data-glass-surface="panel"]',
+  '[data-slot="app-shell"] [data-glass-surface="panel"]:not([data-glass-surface="panel"] [data-glass-surface="panel"])',
 ].join(',')
 const MAX_SURFACES = 24
 const MAP_CACHE_LIMIT = 24
@@ -126,20 +126,49 @@ export function attachGlassRefraction(definitions: SVGDefsElement, material: Res
     delete surface.dataset.glassRefraction
   }
 
-  let frame = 0
-  const reconcile = () => {
-    frame = 0
-    const surfaces = [...document.querySelectorAll<HTMLElement>(SURFACES)]
-      .filter((element) => element.getClientRects().length > 0)
-      .sort((a, b) => Number(b.dataset.glassSurface === 'overlay') - Number(a.dataset.glassSurface === 'overlay'))
-      .slice(0, MAX_SURFACES)
-    const selected = new Set(surfaces)
+  const observed = new Set<HTMLElement>()
+  const visible = new Set<HTMLElement>()
+  const priority = { overlay: 2, chrome: 1 }
+  function rank(surface: HTMLElement) {
+    const kind = surface.dataset.glassSurface
+    return kind === 'overlay' || kind === 'chrome' ? priority[kind] : 0
+  }
+
+  const updateLenses = () => {
+    const selected = new Set([...visible].sort((a, b) => rank(b) - rank(a)).slice(0, MAX_SURFACES))
     for (const surface of active.keys()) if (!selected.has(surface)) detach(surface)
-    for (const surface of surfaces) {
+    for (const surface of selected) {
       if (active.has(surface)) continue
       active.set(surface, createFilter(definitions, 64 * material.lensing))
       resize.observe(surface, { box: 'border-box' })
     }
+  }
+
+  const intersection = new IntersectionObserver((entries) => {
+    for (const { target, isIntersecting } of entries) {
+      const surface = target as HTMLElement
+      if (isIntersecting && observed.has(surface)) visible.add(surface)
+      else visible.delete(surface)
+    }
+    updateLenses()
+  })
+
+  let frame = 0
+  const reconcile = () => {
+    frame = 0
+    const surfaces = new Set(document.querySelectorAll<HTMLElement>(SURFACES))
+    for (const surface of observed) {
+      if (surfaces.has(surface)) continue
+      intersection.unobserve(surface)
+      observed.delete(surface)
+      visible.delete(surface)
+    }
+    for (const surface of surfaces) {
+      if (observed.has(surface)) continue
+      observed.add(surface)
+      intersection.observe(surface)
+    }
+    updateLenses()
   }
 
   const schedule = () => {
@@ -149,11 +178,10 @@ export function attachGlassRefraction(definitions: SVGDefsElement, material: Res
     if (records.some((record) => !definitions.contains(record.target))) schedule()
   })
   mutations.observe(document.body, { childList: true, subtree: true })
-  window.addEventListener('resize', schedule)
   schedule()
   return () => {
     mutations.disconnect()
-    window.removeEventListener('resize', schedule)
+    intersection.disconnect()
     cancelAnimationFrame(frame)
     for (const surface of active.keys()) detach(surface)
     resize.disconnect()

@@ -1149,7 +1149,7 @@ export function FilesPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border bg-card/60 p-3">
+          <div data-glass-surface="panel" className="rounded-xl border bg-card/60 p-3">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
               <span className="inline-flex items-center gap-1.5 font-medium">
                 <HardDrive className="size-3.5 text-primary" />
@@ -1549,6 +1549,8 @@ export function FilesPage() {
                     return (
                       <div
                         key={file.id}
+                        data-glass-surface="panel"
+                        data-glass-selected={selected || undefined}
                         draggable={view === 'files' && canManage}
                         onDragStart={(event) => {
                           if (view !== 'files' || !canManage) return
@@ -1636,7 +1638,7 @@ export function FilesPage() {
                   })}
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-xl border bg-card/40">
+                <div data-glass-surface="panel" className="overflow-hidden rounded-xl border bg-card/40">
                   {visibleFiles.map((file) => {
                     const canManage = canManageFile(file)
                     const folderName = folderPathNames(folders, file.folderId)
@@ -1644,6 +1646,8 @@ export function FilesPage() {
                     return (
                       <div
                         key={file.id}
+                        data-glass-surface="panel"
+                        data-glass-selected={selected || undefined}
                         draggable={view === 'files' && canManage}
                         onDragStart={(event) => {
                           if (view !== 'files' || !canManage) return

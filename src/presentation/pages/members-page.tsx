@@ -116,6 +116,7 @@ export function MembersPage() {
             return (
               <div
                 key={stat.label}
+                data-glass-surface="panel"
                 className="min-w-0 rounded-2xl border bg-card/70 p-2.5 sm:p-4"
               >
                 <div className="flex items-center gap-1.5">
@@ -160,7 +161,7 @@ export function MembersPage() {
             description="No encontramos a nadie con esa búsqueda."
           />
         ) : (
-          <div className="overflow-hidden rounded-2xl border bg-card/60">
+          <div data-glass-surface="panel" className="overflow-hidden rounded-2xl border bg-card/60">
             <div className="hidden grid-cols-[1fr_140px_120px_80px] gap-3 border-b bg-muted/30 px-4 py-2 text-[0.62rem] font-semibold uppercase tracking-wider text-muted-foreground sm:grid">
               <span>Persona</span>
               <span>Rol</span>
@@ -287,7 +288,7 @@ export function MembersPage() {
           </div>
         )}
 
-        <div className="rounded-2xl border bg-muted/30 p-4 text-xs text-muted-foreground">
+        <div data-glass-surface="panel" className="rounded-2xl border bg-muted/30 p-4 text-xs text-muted-foreground">
           <strong className="text-foreground">Roles:</strong> el propietario tiene control total; los
           administradores gestionan miembros y contenido; los miembros crean canales, tableros y
           páginas.

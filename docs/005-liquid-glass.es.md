@@ -2,7 +2,7 @@
 
 ## Concepto
 
-El tema web de openQomu sigue la jerarquía descrita por [Apple en su introducción a Liquid Glass](https://developer.apple.com/documentation/technologyoverviews/liquid-glass) y en las [guías de materiales](https://developer.apple.com/design/human-interface-guidelines/materials). El vidrio identifica navegación y controles por encima del contenido. En el tablero las tarjetas se desplazan por debajo de las cabeceras de columna, y el detalle deja ver el tablero debajo. Los indicadores y gráficos del resumen usan vidrio tintado sobre un fondo de bandas azules. La pantalla baja la intensidad del fondo en el tema claro y lo retira con reducción de transparencia o colores forzados.
+El tema web de openQomu sigue la jerarquía descrita por [Apple en su introducción a Liquid Glass](https://developer.apple.com/documentation/technologyoverviews/liquid-glass) y en las [guías de materiales](https://developer.apple.com/design/human-interface-guidelines/materials). El vidrio identifica navegación y controles por encima del contenido. En el tablero las tarjetas se desplazan por debajo de las cabeceras de columna, y el detalle deja ver el tablero debajo. Los paneles del espacio usan vidrio tintado sobre un fondo de bandas azules. El material cubre los indicadores y gráficos del resumen, el compositor de chat, las tarjetas de tableros y documentos, el editor y los paneles de archivos, miembros, temas y ajustes. La pantalla baja la intensidad del fondo en el tema claro y lo retira con reducción de transparencia o colores forzados.
 
 Un mapa de desplazamiento generado para el tamaño de cada superficie aplica refracción al contenido que Chromium compone en ese instante. El borde curvo desvía más la imagen que el centro. Los reflejos del borde son fijos y los botones se comprimen durante la pulsación. El filtrado preserva el foco y las áreas de interacción.
 
@@ -35,7 +35,7 @@ Un mapa de desplazamiento generado para el tamaño de cada superficie aplica ref
 
 - `material`: `clear`, `regular`, `frosted`.
 - `renderer: "auto"` aplica refracción del contenido en Chromium si `svg` está activo y `lensing` es mayor que cero. `css` usa desenfoque, tinte y reflejos. `webgl` conserva la lente de fondo decorativo para temas que la solicitan explícitamente.
-- `quality` limita la resolución del mapa a 256, 512 o 768 píxeles en su lado mayor. Se crean filtros para un máximo de 24 superficies, con prioridad para los paneles flotantes.
+- `quality` limita la resolución del mapa a 256, 512 o 768 píxeles en su lado mayor. Se crean filtros para un máximo de 24 superficies visibles. Los paneles flotantes tienen prioridad, seguidos de la navegación y las tarjetas.
 - `grid` y `caustics` se aplican en el fondo del modo WebGL. `tintLight` y `lightSpread` se aceptan en temas exportados anteriormente.
 - `glass` requiere que `effects` incluya `glass`.
 

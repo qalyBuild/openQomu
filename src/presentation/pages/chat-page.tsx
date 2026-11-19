@@ -264,7 +264,7 @@ function ChannelChat({ channelId }: { channelId: string }) {
   }))
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background">
+    <div data-glass-chat className="flex h-full min-h-0 flex-col bg-background">
       {topbarSlot &&
         createPortal(
           <>
@@ -346,7 +346,7 @@ function ChannelChat({ channelId }: { channelId: string }) {
                 ))}
               </div>
             ) : groups.length === 0 ? (
-              <div className="rounded-2xl border border-dashed bg-card/40 p-8 text-center">
+              <div data-glass-surface="panel" className="rounded-2xl border border-dashed bg-card/40 p-8 text-center">
                 <p className="text-sm font-medium">Sé el primero en escribir</p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   Comparte una idea, una pregunta o un enlace. Todo el equipo lo verá al instante.
@@ -406,7 +406,12 @@ function ChannelChat({ channelId }: { channelId: string }) {
         )}
       </div>
 
-      <div ref={composerRef} className="shrink-0 border-t border-border/70 bg-background/90 backdrop-blur">
+      <div
+        ref={composerRef}
+        data-glass-surface="chrome"
+        data-glass-chrome="composer"
+        className="shrink-0 border-t border-border/70 bg-background/90 backdrop-blur"
+      >
         <div className="mx-auto max-w-6xl">
           <MessageComposer
             channelId={channel.id}

@@ -68,7 +68,7 @@ export function PushPreferences() {
   }
 
   return (
-    <div className="mt-4 rounded-2xl border bg-card/60 p-5">
+    <div data-glass-surface="panel" className="mt-4 rounded-2xl border bg-card/60 p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold">
         <Smartphone className="size-4" /> Notificaciones push
       </h2>

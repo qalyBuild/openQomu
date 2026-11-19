@@ -237,7 +237,7 @@ export function McpTokensPanel({ uid, workspaceId }: { uid: string; workspaceId:
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-primary/20 bg-card/60 p-5">
+      <div data-glass-surface="panel" className="rounded-2xl border border-primary/20 bg-card/60 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
