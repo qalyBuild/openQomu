@@ -195,7 +195,32 @@ export class FirebaseMessageRepository implements MessageRepository {
   }
 
   async markRead(workspaceId: string, channelId: string, uid: string, at: string): Promise<void> {
-    await setDoc(doc(readsCol(workspaceId, channelId), uid), { uid, lastReadAt: at })
+    const receipt = doc(readsCol(workspaceId, channelId), uid)
+    await runTransaction(db(), async (transaction) => {
+      const previous = (await transaction.get(receipt)).data()?.lastReadAt
+      if (typeof previous !== 'string' || at > previous) {
+        transaction.set(receipt, { uid, lastReadAt: at })
+      }
+    })
+  }
+
+  subscribeRead(
+    workspaceId: string,
+    channelId: string,
+    uid: string,
+    callback: Subscriber<string | null>,
+  ): Unsubscribe {
+    return onSnapshot(
+      doc(readsCol(workspaceId, channelId), uid),
+      (snapshot) => {
+        const value = snapshot.data()?.lastReadAt
+        callback(typeof value === 'string' ? value : null)
+      },
+      (error) => {
+        console.error('[qomu] read snapshot', error)
+        callback(null)
+      },
+    )
   }
 
   subscribeReads(

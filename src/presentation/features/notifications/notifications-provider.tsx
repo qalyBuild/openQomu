@@ -99,7 +99,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [uid, workspace.id, state])
 
   // --- Mensajes de todos los canales visibles -----------------------------
-  const channelKey = useMemo(() => channels.map((channel) => channel.id).join('|'), [channels])
+  const channelKey = useMemo(() => channels.map((channel) => channel.id).sort().join('|'), [channels])
   const [messagesByChannel, setMessagesByChannel] = useState<Record<string, Message[]>>({})
   useEffect(() => {
     setMessagesByChannel({})
@@ -114,6 +114,27 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       for (const unsubscribe of unsubscribers) unsubscribe()
     }
   }, [channelKey, container, workspace.id])
+
+  // Espera la primera lectura del servidor antes de contar mensajes de un canal.
+  const [remoteReads, setRemoteReads] = useState<{
+    scope: string
+    byChannel: Record<string, string | null>
+  }>({ scope: stateKey, byChannel: {} })
+  useEffect(() => {
+    if (!uid || !channelKey) return
+    const unsubscribers = channelKey.split('|').map((channelId) =>
+      container.messages.subscribeRead(workspace.id, channelId, uid, (at) => {
+        setRemoteReads((current) => {
+          const byChannel = current.scope === stateKey ? current.byChannel : {}
+          if (byChannel[channelId] === at) return current
+          return { scope: stateKey, byChannel: { ...byChannel, [channelId]: at } }
+        })
+      }),
+    )
+    return () => {
+      for (const unsubscribe of unsubscribers) unsubscribe()
+    }
+  }, [channelKey, container, stateKey, uid, workspace.id])
 
   // --- Tareas de todos los tableros ---------------------------------------
   const boardKey = useMemo(() => boards.map((board) => board.id).join('|'), [boards])
@@ -176,7 +197,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const now = new Date().toISOString()
     setState((current) => {
-      if (activeChannelId) return markNotificationRead(current, `channel:${activeChannelId}`, now)
+      if (activeChannelId && document.visibilityState !== 'hidden') {
+        return markNotificationRead(current, `channel:${activeChannelId}`, now)
+      }
       if (pathname.includes('/pages')) return markNotificationRead(current, 'pages', now)
       if (pathname.includes('/files')) return markNotificationRead(current, 'files', now)
       if (pathname.includes('/members')) return markNotificationRead(current, 'members', now)
@@ -188,7 +211,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   // Mientras el canal está abierto, lo que llega se considera leído.
   const activeLastMessageAt = latestCreatedAt(activeChannelId ? messagesByChannel[activeChannelId] : undefined)
   useEffect(() => {
-    if (!activeChannelId || !activeLastMessageAt) return
+    if (!activeChannelId || !activeLastMessageAt || document.visibilityState === 'hidden') return
     setState((current) =>
       markNotificationRead(current, `channel:${activeChannelId}`, activeLastMessageAt),
     )
@@ -213,21 +236,23 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     profile?.displayName ??
     session?.displayName ??
     null
-  const lastReadByChannel = useMemo(
-    () =>
-      Object.fromEntries(
-        channels.map((channel) => [
-          channel.id,
-          state.lastReadAt[`channel:${channel.id}`],
-        ]),
-      ),
-    [channels, state.lastReadAt],
-  )
+  const { readyChannels, lastReadByChannel } = useMemo(() => {
+    const byChannel = remoteReads.scope === stateKey ? remoteReads.byChannel : {}
+    const readyChannels = channels.filter((channel) => Object.hasOwn(byChannel, channel.id))
+    const lastReadByChannel = Object.fromEntries(
+      readyChannels.map(({ id }) => {
+        const local = state.lastReadAt[`channel:${id}`]
+        const remote = byChannel[id]
+        return [id, remote && (!local || remote > local) ? remote : local]
+      }),
+    )
+    return { readyChannels, lastReadByChannel }
+  }, [channels, remoteReads, state.lastReadAt, stateKey])
 
   const items = useMemo(
     () => [
       ...collectMessageNotifications({
-        channels,
+        channels: readyChannels,
         messagesByChannel,
         lastReadByChannel,
         uid,
@@ -250,7 +275,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       }),
     ],
     [
-      channels,
+      readyChannels,
       columnsByBoard,
       commentsByTask,
       displayName,

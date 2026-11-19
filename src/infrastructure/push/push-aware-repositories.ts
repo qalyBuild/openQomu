@@ -109,6 +109,15 @@ export class PushAwareMessageRepository implements MessageRepository {
     return this.inner.markRead(workspaceId, channelId, uid, at)
   }
 
+  subscribeRead(
+    workspaceId: string,
+    channelId: string,
+    uid: string,
+    callback: Subscriber<string | null>,
+  ): Unsubscribe {
+    return this.inner.subscribeRead(workspaceId, channelId, uid, callback)
+  }
+
   subscribeReads(
     workspaceId: string,
     channelId: string,
