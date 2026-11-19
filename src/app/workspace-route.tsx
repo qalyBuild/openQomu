@@ -29,7 +29,7 @@ export function WorkspaceRoute() {
   if (!workspace) return <Navigate to="/app" replace />
 
   return (
-    <WorkspaceDataProvider workspace={workspace}>
+    <WorkspaceDataProvider key={workspace.id} workspace={workspace}>
       <NotificationsProvider>
         <AppShell workspace={workspace}>
           <Outlet />

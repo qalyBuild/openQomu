@@ -31,6 +31,7 @@ export interface DemoState {
   typing: Record<string, TypingUser>
   /** Clave `channelId:uid`. */
   reads: Record<string, ChannelRead>
+  fileReads?: Record<string, number>
   boards: Record<string, Board>
   tasks: Record<string, Task>
   comments: Record<string, TaskComment>

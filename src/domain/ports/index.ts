@@ -289,6 +289,16 @@ export interface FileUpdate {
   trashedAt?: string | null
 }
 
+export interface FileReadRepository {
+  subscribe(
+    workspaceId: string,
+    uid: string,
+    callback: Subscriber<number>,
+    onError: () => void,
+  ): Unsubscribe
+  advance(workspaceId: string, uid: string, through: number): Promise<void>
+}
+
 export interface FileRepository {
   list(workspaceId: string): Promise<FileMeta[]>
   subscribe(workspaceId: string, callback: Subscriber<FileMeta[]>): Unsubscribe
@@ -387,6 +397,7 @@ export interface AppContainer {
   pages: PageRepository
   files: FileRepository
   fileFolders: FileFolderRepository
+  fileReads?: FileReadRepository
   mcpTokens: McpTokenRepository
   devices: DeviceRepository
   pushOutbox: PushOutbox

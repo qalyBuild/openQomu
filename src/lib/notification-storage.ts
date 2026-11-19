@@ -12,6 +12,7 @@ export interface NotificationState {
   soundId: string
   /** Última lectura por clave: `channel:<id>`, `pages`, `files`, `members`, `comments`. */
   lastReadAt: Record<string, string>
+  fileReadThrough?: number
   /** Ids de avisos ya notificados; sirve para no repetir el sonido. */
   seenNotificationIds: string[]
 }
@@ -71,6 +72,12 @@ function normalize(value: unknown, fallback: NotificationState): NotificationSta
       ? candidate.soundId
       : fallback.soundId,
     lastReadAt: { ...fallback.lastReadAt, ...lastReadAt },
+    fileReadThrough: typeof candidate.fileReadThrough === 'number'
+      && Number.isSafeInteger(candidate.fileReadThrough)
+      && candidate.fileReadThrough > 0
+      && candidate.fileReadThrough <= Date.now()
+      ? candidate.fileReadThrough
+      : undefined,
     seenNotificationIds: Array.isArray(candidate.seenNotificationIds)
       ? candidate.seenNotificationIds.filter((id): id is string => typeof id === 'string')
       : [],
@@ -134,6 +141,18 @@ export function markNotificationRead(
     ...state,
     lastReadAt: { ...state.lastReadAt, [key]: at },
   }
+}
+
+export function advanceFileRead(state: NotificationState, through: number): NotificationState {
+  return through > (state.fileReadThrough ?? 0) ? { ...state, fileReadThrough: through } : state
+}
+
+/** Una marca distinta del valor inicial común indica una visita en el formato anterior. */
+export function legacyFileVisit(state: NotificationState): number {
+  const { files, pages, members, comments } = state.lastReadAt
+  if ([pages, members, comments].includes(files)) return 0
+  const time = Date.parse(files)
+  return time > 0 && time <= Date.now() ? time : 0
 }
 
 export function setSoundEnabled(state: NotificationState, enabled: boolean): NotificationState {

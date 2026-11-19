@@ -27,7 +27,7 @@ export function KanbanColumn({
   tasks: Task[]
   tasksById: Map<string, Task>
   members: Member[]
-  onOpenTask: (task: Task) => void
+  onOpenTask: (task: Task, trigger: HTMLElement) => void
   onCreateTask: (columnId: string) => void
   onEditColumn?: (column: BoardColumn) => void
 }) {
@@ -122,7 +122,7 @@ export function KanbanColumn({
                           .filter((item): item is Task => Boolean(item))
                       : []
                   }
-                  onClick={() => onOpenTask(task)}
+                  onClick={(trigger) => onOpenTask(task, trigger)}
                 />
               ))}
             </div>

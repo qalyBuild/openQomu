@@ -7,6 +7,7 @@ import { DemoMessageRepository } from './demo-message-repository'
 import { DemoBoardRepository } from './demo-board-repository'
 import { DemoTaskRepository } from './demo-task-repository'
 import { DemoPageRepository } from './demo-page-repository'
+import { DemoFileReadRepository } from './demo-file-read-repository'
 import { DemoFileRepository } from './demo-file-repository'
 import { DemoFileFolderRepository } from './demo-file-folder-repository'
 import { DemoMcpTokenRepository } from './demo-mcp-token-repository'
@@ -27,6 +28,7 @@ export function createDemoContainer(store: DemoStore = getDemoStore()): AppConta
     tasks: new DemoTaskRepository(store),
     pages: new DemoPageRepository(store),
     files: new DemoFileRepository(store),
+    fileReads: new DemoFileReadRepository(store),
     fileFolders: new DemoFileFolderRepository(store),
     mcpTokens: new DemoMcpTokenRepository(),
     devices: new DemoDeviceRepository(),

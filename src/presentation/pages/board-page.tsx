@@ -114,7 +114,8 @@ export function BoardPage() {
   const [mine, setMine] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeWidth, setActiveWidth] = useState(290)
-  const [openTaskId, setOpenTaskId] = useState<string | null>(null)
+  const openTaskId = params.get('task')
+  const taskTrigger = useRef<HTMLElement>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [createColumnId, setCreateColumnId] = useState<string>('')
   const [columnsOpen, setColumnsOpen] = useState(false)
@@ -199,8 +200,6 @@ export function BoardPage() {
   const openTask = openTaskId ? tasks.find((task) => task.id === openTaskId) ?? null : null
 
   useEffect(() => {
-    const taskParam = params.get('task')
-    if (taskParam) setOpenTaskId(taskParam)
     if (params.get('new') === '1' && board) {
       setCreateColumnId(defaultTaskColumnId(board.columns))
       setCreateOpen(true)
@@ -224,15 +223,14 @@ export function BoardPage() {
 
   if (!board) return null
 
-  const openTaskDetail = (task: Task) => {
-    setOpenTaskId(task.id)
+  const openTaskDetail = (task: Task, trigger: HTMLElement) => {
+    taskTrigger.current = trigger
     const next = new URLSearchParams(params)
     next.set('task', task.id)
     setParams(next, { replace: true })
   }
 
   const closeTaskDetail = () => {
-    setOpenTaskId(null)
     const next = new URLSearchParams(params)
     next.delete('task')
     setParams(next, { replace: true })
@@ -530,7 +528,6 @@ export function BoardPage() {
         defaultColumnId={createColumnId}
         suggestedLabels={labelOptions}
         onCreated={(task) => {
-          setOpenTaskId(task.id)
           const next = new URLSearchParams(params)
           next.set('task', task.id)
           setParams(next, { replace: true })
@@ -546,6 +543,13 @@ export function BoardPage() {
         role={role}
         suggestedLabels={labelOptions}
         onClose={closeTaskDetail}
+        onCloseAutoFocus={(event) => {
+          const trigger = taskTrigger.current
+          taskTrigger.current = null
+          if (!trigger?.isConnected) return
+          event.preventDefault()
+          trigger.focus({ preventScroll: true })
+        }}
         onTransferred={(moved, target) => {
           closeTaskDetail()
           navigate(`/w/${target.workspaceId}/boards/${target.boardId}?task=${moved.id}`)
