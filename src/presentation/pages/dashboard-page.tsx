@@ -60,7 +60,7 @@ const overviewDate = new Intl.DateTimeFormat('es-ES', {
   month: 'long',
   year: 'numeric',
 })
-const overviewLinkClass = 'font-medium text-foreground underline underline-offset-4 hover:text-primary'
+const overviewLinkClass = 'font-medium text-foreground underline decoration-primary/50 underline-offset-4 hover:text-primary'
 
 function DashboardOverview({ tasksByBoard }: { tasksByBoard: Record<string, Task[]> }) {
   const { workspace, uid, boards, channels } = useWorkspaceData()
@@ -81,7 +81,7 @@ function DashboardOverview({ tasksByBoard }: { tasksByBoard: Record<string, Task
   const unreadChannels = channels.filter((channel) => byTarget[notificationKey('chat', channel.id)] > 0)
 
   return (
-    <div className="min-w-0 space-y-1.5">
+    <div className="min-w-0 space-y-1.5 rounded-lg border-s-2 border-primary/60 bg-primary/5 px-4 py-3">
       <h1 className="text-2xl font-semibold tracking-[-0.03em] first-letter:uppercase sm:text-3xl">
         <time dateTime={dayKey(today)}>{overviewDate.format(today)}</time>
       </h1>
