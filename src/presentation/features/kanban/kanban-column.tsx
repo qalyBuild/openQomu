@@ -55,7 +55,7 @@ export function KanbanColumn({
       data-glass-column
       data-drag-over={isOver || undefined}
       className={cn(
-        'flex h-full min-w-0 flex-col rounded-2xl border bg-muted/30 transition-colors',
+        'flex h-full min-h-0 min-w-0 flex-col rounded-2xl border bg-muted/30 transition-colors',
         isOver && 'border-primary/40 bg-primary/5',
       )}
     >

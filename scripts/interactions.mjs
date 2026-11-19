@@ -146,17 +146,20 @@ async function verifyColumnGlass() {
     const element = document.querySelector('[data-column-id="todo"] [data-glass-chrome="column"]')
     return Boolean(element?.style.getPropertyValue('--glass-light-x'))
   })
+  const viewport = page.viewportSize()
+  await page.setViewportSize({ ...viewport, height: 560 })
   const geometry = await header.evaluate((element) => {
     const list = element.parentElement
     const card = list.querySelector('[data-task-id="t-1"]')
-    list.style.maxHeight = '160px'
     list.scrollTop = 65
     const lens = element.getBoundingClientRect()
     const task = card.getBoundingClientRect()
+    const scrollTop = list.scrollTop
     list.scrollTop = 0
-    list.style.removeProperty('max-height')
-    return { overlaps: task.top < lens.bottom && task.bottom > lens.top, sticky: getComputedStyle(element).position }
+    return { overlaps: task.top < lens.bottom && task.bottom > lens.top, scrollTop, sticky: getComputedStyle(element).position }
   })
+  await page.setViewportSize(viewport)
+  assert.equal(geometry.scrollTop, 65, 'La columna debe desplazarse dentro del tablero')
   assert.equal(geometry.sticky, 'sticky')
   assert.ok(geometry.overlaps, 'La tarjeta debe desplazarse por debajo de la cabecera')
 }
