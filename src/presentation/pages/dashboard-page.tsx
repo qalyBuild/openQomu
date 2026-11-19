@@ -243,7 +243,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="scrollbar-thin h-full overflow-y-auto">
+    <div data-glass-dashboard className="scrollbar-thin h-full overflow-y-auto">
       <div className="mx-auto max-w-6xl space-y-6 p-5 pb-12 sm:p-8">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <DashboardOverview columns={activeColumns} />
@@ -543,7 +543,7 @@ export function DashboardPage() {
           </Card>
         </div>
 
-        <div className="flex flex-col items-center justify-between gap-3 rounded-2xl border bg-gradient-to-r from-primary/10 via-card to-fuchsia-500/10 p-4 sm:flex-row">
+        <div data-glass-surface="panel" className="flex flex-col items-center justify-between gap-3 rounded-2xl border bg-gradient-to-r from-primary/10 via-card to-fuchsia-500/10 p-4 sm:flex-row">
           <div className="flex items-center gap-3">
             <UserAvatar name={profile?.displayName ?? 'openQomu'} photoURL={profile?.photoURL} size="lg" />
             <div>

@@ -26,6 +26,15 @@ html[data-effects~='glass'] [data-slot='app-shell'] {
   background: transparent !important;
 }
 
+html[data-effects~='glass']:not([data-glass-renderer='webgl']) [data-slot='app-shell'] {
+  --glass-wallpaper-wash: linear-gradient(140deg, rgb(233 242 252 / 0.93), rgb(220 234 252 / 0.66));
+  background: var(--glass-wallpaper-wash), url('./assets/glass-wallpaper.webp') center / cover no-repeat !important;
+}
+
+html[data-effects~='glass'].dark [data-slot='app-shell'] {
+  --glass-wallpaper-wash: linear-gradient(125deg, rgb(7 12 23 / 0.46), rgb(7 12 23 / 0.04));
+}
+
 /* ---------------- Fondo ---------------- */
 
 .glass-backdrop {
@@ -106,7 +115,7 @@ html[data-effects~='glass'] [data-slot='app-shell'] {
 }
 
 html[data-effects~='glass'] [data-glass-column] {
-  background: color-mix(in oklab, var(--muted) 25%, var(--background));
+  background: color-mix(in oklab, var(--background) 58%, transparent);
 }
 
 html[data-effects~='glass'] [data-glass-column][data-drag-over] {
@@ -117,7 +126,7 @@ html[data-effects~='glass'] [data-glass-column] > div {
   scroll-padding-block-start: 4rem;
 }
 
-html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay']) {
+html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel']) {
   --glass-softness: max(8px, var(--glass-blur));
   --glass-body: clamp(48%, calc(var(--glass-surface-alpha) * 100% + 16%), 90%);
   --glass-edge: max(20%, calc(var(--glass-body) - 27%));
@@ -142,8 +151,24 @@ html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surfa
     0 9px 22px -10px rgb(7 15 26 / calc(0.42 * var(--glass-shadow)));
 }
 
-html[data-effects~='glass'].dark :is([data-glass-surface='chrome'], [data-glass-surface='overlay']) {
+html[data-effects~='glass'].dark :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel']) {
   --glass-rim-shade: rgb(125 163 210 / 0.18);
+}
+
+html[data-effects~='glass'] :where([data-glass-dashboard]) [data-glass-surface='panel'] {
+  position: relative;
+  --glass-body: 66%;
+  --glass-edge: 26%;
+  --glass-softness: 6px;
+}
+
+html[data-effects~='glass'].dark :where([data-glass-dashboard]) [data-glass-surface='panel'] {
+  --glass-body: 58%;
+  --glass-edge: 21%;
+}
+
+html[data-effects~='glass'] [data-glass-dashboard] .recharts-cartesian-axis-tick-value {
+  fill: var(--muted-foreground);
 }
 
 html[data-effects~='glass'] [data-glass-refraction='live'] {
@@ -202,7 +227,7 @@ html[data-effects~='glass'] [data-slot='sheet-content'][data-side='left'] {
   border-end-end-radius: 1.35rem;
 }
 
-html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'])::after {
+html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel'])::after {
   content: '';
   position: absolute;
   z-index: 2;
@@ -228,12 +253,12 @@ html[data-effects~='glass'] :is([data-slot='dialog-overlay'], [data-slot='sheet-
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'])
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel'])
     [data-slot='button'] {
     transition: scale 220ms cubic-bezier(.2, .9, .25, 1.4), background-color 150ms ease;
   }
 
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'])
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel'])
     [data-slot='button']:active {
     scale: 0.92;
   }
@@ -250,7 +275,11 @@ html[data-effects~='glass'] :is([data-slot='dialog-overlay'], [data-slot='sheet-
     display: none;
   }
 
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay']) {
+  html[data-effects~='glass']:not([data-glass-renderer='webgl']) [data-slot='app-shell'] {
+    background: var(--background) !important;
+  }
+
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel']) {
     background: var(--background) !important;
     border-color: var(--border) !important;
     box-shadow: none;
@@ -258,7 +287,7 @@ html[data-effects~='glass'] :is([data-slot='dialog-overlay'], [data-slot='sheet-
     backdrop-filter: none;
   }
 
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'])::after {
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel'])::after {
     content: none;
   }
 
@@ -268,18 +297,18 @@ html[data-effects~='glass'] :is([data-slot='dialog-overlay'], [data-slot='sheet-
 }
 
 @media (forced-colors: active) {
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay']) {
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel']) {
     background: Canvas !important;
     border-color: CanvasText !important;
   }
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay']) {
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel']) {
     background: var(--background) !important;
   }
 
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'])::after {
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel'])::after {
     content: none;
   }
 }

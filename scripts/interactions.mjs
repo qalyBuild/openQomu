@@ -71,6 +71,7 @@ async function checkThemes(workspaceId) {
   }
   for (const id of ['liquid-glass-light', 'liquid-glass-dark', 'qomu-light', 'prueba-personalizada', 'qomu-dark']) {
     await applyTheme(page, id)
+    if (id === 'liquid-glass-dark') await verifyDashboardGlass(workspaceId)
     await page.goto(boardUrl)
     await page.waitForFunction((value) => document.documentElement.dataset.theme === value, id)
     await themedCard.click()
@@ -136,6 +137,59 @@ async function checkThemes(workspaceId) {
   }
   console.log('[themes] tareas accesibles con ratón, teclado, enlace y toque')
 
+}
+
+async function verifyDashboardGlass(workspaceId) {
+  await page.goto(`${BASE}/w/${workspaceId}/dashboard`)
+  const dashboard = page.locator('[data-glass-dashboard]')
+  const panel = dashboard.locator('[data-glass-refraction="live"]').filter({ hasText: 'Ritmo del equipo' })
+  await panel.waitFor()
+  await dashboard.locator('[data-glass-refraction="live"]').filter({ hasText: 'Esperando revisión' }).waitFor()
+  await page.evaluate(async () => {
+    const shell = document.querySelector('[data-slot="app-shell"]')
+    const url = getComputedStyle(shell).backgroundImage.match(/url\("([^"]+)"\)/)?.[1]
+    if (!url) throw new Error('Falta el fondo del tema Liquid Glass')
+    const wallpaper = new Image()
+    wallpaper.src = url
+    await wallpaper.decode()
+  })
+
+  const refracted = (await panel.screenshot({ animations: 'disabled' })).toString('base64')
+  await panel.evaluate((element) => {
+    const filter = getComputedStyle(element).backdropFilter.replace(/url\([^)]+\)\s*/, '')
+    element.style.backdropFilter = filter
+  })
+  try {
+    const control = (await panel.screenshot({ animations: 'disabled' })).toString('base64')
+    const changed = await page.evaluate(async ([before, after]) => {
+      async function rimPixels(data) {
+        const image = new Image()
+        image.src = `data:image/png;base64,${data}`
+        await image.decode()
+        const canvas = document.createElement('canvas')
+        canvas.width = image.width
+        canvas.height = image.height
+        const context = canvas.getContext('2d')
+        context.drawImage(image, 0, 0)
+        const left = context.getImageData(5, 25, 9, canvas.height - 50)
+        const right = context.getImageData(canvas.width - 14, 25, 9, canvas.height - 50)
+        return [left.data, right.data]
+      }
+      const [refracted, control] = await Promise.all([rimPixels(before), rimPixels(after)])
+      let changed = 0
+      for (const [edge, pixels] of refracted.entries()) {
+        for (let i = 0; i < pixels.length; i += 4) {
+          const original = control[edge]
+          if ([0, 1, 2].some((offset) => Math.abs(pixels[i + offset] - original[i + offset]) > 12)) changed++
+        }
+      }
+      return changed
+    }, [refracted, control])
+    assert.ok(changed > 100, `El fondo del resumen no se deforma: ${changed} píxeles`)
+    console.log('[glass] tarjetones y gráficos del resumen refractan el fondo real')
+  } finally {
+    await panel.evaluate((element) => element.style.removeProperty('backdrop-filter'))
+  }
 }
 
 async function verifyColumnGlass() {
