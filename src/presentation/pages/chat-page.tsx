@@ -123,10 +123,12 @@ function ChannelChat({ channelId }: { channelId: string }) {
     const timer = window.setTimeout(mark, 600)
     document.addEventListener('visibilitychange', mark)
     window.addEventListener('focus', mark)
+    window.addEventListener('online', mark)
     return () => {
       window.clearTimeout(timer)
       document.removeEventListener('visibilitychange', mark)
       window.removeEventListener('focus', mark)
+      window.removeEventListener('online', mark)
     }
   }, [channelId, container, messages.length, uid, workspace.id])
 

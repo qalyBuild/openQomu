@@ -274,6 +274,7 @@ describe('demo canales y mensajería', () => {
     await login(container)
     const typing: string[][] = []
     const reads: Array<Record<string, string>> = []
+    const ownReads: Array<string | null> = []
     const stopTyping = container.messages.subscribeTyping(
       DEMO_WORKSPACE_ID,
       'ch-general',
@@ -284,6 +285,13 @@ describe('demo canales y mensajería', () => {
       'ch-general',
       (value) => reads.push(value),
     )
+    const stopOwnReads = container.messages.subscribeRead(
+      DEMO_WORKSPACE_ID,
+      'ch-general',
+      'u-ana',
+      (value) => ownReads.push(value),
+    )
+    expect(ownReads.at(-1)).toBeNull()
 
     await container.messages.setTyping(
       DEMO_WORKSPACE_ID,
@@ -307,6 +315,13 @@ describe('demo canales y mensajería', () => {
       '2026-11-15T10:00:00.000Z',
     )
     expect(reads.at(-1)).toEqual({ 'u-ana': '2026-11-15T10:00:00.000Z' })
+    await container.messages.markRead(
+      DEMO_WORKSPACE_ID,
+      'ch-general',
+      'u-ana',
+      '2026-11-15T09:00:00.000Z',
+    )
+    expect(ownReads.at(-1)).toBe('2026-11-15T10:00:00.000Z')
 
     // Otro canal no contamina las lecturas del primero.
     await container.messages.markRead(
@@ -319,6 +334,7 @@ describe('demo canales y mensajería', () => {
 
     stopTyping()
     stopReads()
+    stopOwnReads()
     await expect(
       container.messages.setTyping(
         DEMO_WORKSPACE_ID,

@@ -143,6 +143,13 @@ export interface MessageRepository {
   ): Unsubscribe
   /** Marca el canal como leído hasta `at` para el usuario. */
   markRead(workspaceId: string, channelId: string, uid: string, at: string): Promise<void>
+  /** Última lectura sincronizada de un usuario en el canal. */
+  subscribeRead(
+    workspaceId: string,
+    channelId: string,
+    uid: string,
+    callback: Subscriber<string | null>,
+  ): Unsubscribe
   /** Última lectura de cada miembro del canal, por uid. */
   subscribeReads(
     workspaceId: string,

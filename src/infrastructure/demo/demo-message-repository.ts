@@ -174,8 +174,18 @@ export class DemoMessageRepository implements MessageRepository {
     }
     const key = `${channelId}:${uid}`
     this.store.commit((draft) => {
-      draft.reads[key] = { uid, lastReadAt: at }
+      const previous = draft.reads[key]?.lastReadAt
+      if (!previous || at > previous) draft.reads[key] = { uid, lastReadAt: at }
     })
+  }
+
+  subscribeRead(
+    workspaceId: string,
+    channelId: string,
+    uid: string,
+    callback: Subscriber<string | null>,
+  ): Unsubscribe {
+    return this.subscribeReads(workspaceId, channelId, (reads) => callback(reads[uid] ?? null))
   }
 
   subscribeReads(
