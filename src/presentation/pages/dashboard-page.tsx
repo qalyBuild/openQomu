@@ -81,24 +81,30 @@ function DashboardOverview({
   }, [today])
 
   const assignedBoards = boards.filter((board) =>
+    board.status !== 'deprecated' &&
     tasksByBoard[board.id]?.some((task) =>
       task.assigneeIds.includes(uid) && task.priority !== 'paused' && !isTaskCompleted(task, board.columns),
     ),
   )
+  const reviewColor = columns.find(isReviewColumn)?.color ?? defaultReviewColor
   const unreadChannels = channels.filter((channel) => byTarget[notificationKey('chat', channel.id)] > 0)
 
   return (
     <div className="min-w-0 space-y-1.5">
-      <h1 className="text-2xl font-semibold tracking-[-0.03em] text-primary first-letter:uppercase sm:text-3xl">
-        <time dateTime={dayKey(today)}>{overviewDate.format(today)}</time>
+      <h1 className="text-2xl font-semibold tracking-[-0.03em] first-letter:uppercase sm:text-3xl">
+        <time dateTime={dayKey(today)}>
+          {overviewDate.formatToParts(today).map(({ type, value }, index) =>
+            type === 'weekday' ? <span key={index} className="text-primary">{value}</span> : value,
+          )}
+        </time>
       </h1>
       {assignedBoards.length > 0 && (
-        <p className="break-words text-sm" style={{ color: columns.find(isReviewColumn)?.color ?? defaultReviewColor }}>
+        <p className="break-words text-sm text-muted-foreground">
           Tienes tareas asignadas en{' '}
           {assignedBoards.map((board, index) => (
             <span key={board.id}>
               {index > 0 && ', '}
-              <Link className={overviewLinkClass} to={`/w/${workspace.id}/boards/${board.id}`}>
+              <Link className={overviewLinkClass} style={{ color: reviewColor }} to={`/w/${workspace.id}/boards/${board.id}`}>
                 {board.name}
               </Link>
             </span>
@@ -112,7 +118,7 @@ function DashboardOverview({
           {unreadChannels.map((channel, index) => (
             <span key={channel.id}>
               {index > 0 && ', '}
-              <Link className={`text-primary ${overviewLinkClass}`} to={`/w/${workspace.id}/c/${channel.id}`}>
+              <Link className={`text-foreground ${overviewLinkClass}`} to={`/w/${workspace.id}/c/${channel.id}`}>
                 #{channel.name}
               </Link>
             </span>
