@@ -154,7 +154,7 @@ async function verifyWorkspaceGlass(workspaceId) {
     themes: "[data-theme-id='liquid-glass-dark']",
     'settings?tab=profile': "form[data-glass-surface='panel']",
     'settings?tab=notifications': "[data-glass-surface='panel']",
-    'settings?tab=app': "[data-glass-surface='panel']",
+    'settings?tab=app': "[role='tablist']",
   }
   for (const [route, selector] of Object.entries(routes)) {
     await page.goto(`${BASE}/w/${workspaceId}/${route}`)
