@@ -40,7 +40,7 @@ const BUILTIN_INPUTS: ThemeInput[] = [
     version: 1,
     author: 'Qomu',
     license: 'AGPL-3.0',
-    description: 'Navegación translúcida clara con desenfoque y reflejos.',
+    description: 'Vidrio claro con refracción del contenido en movimiento.',
     tokens: {
       background: 'oklch(0.965 0.012 245)',
       foreground: 'oklch(0.24 0.03 255)',
@@ -80,7 +80,7 @@ const BUILTIN_INPUTS: ThemeInput[] = [
     },
     options: {
       effects: ['glass'],
-      glass: { material: 'regular', grid: 0.22, caustics: 0.15, svg: true },
+      glass: { material: 'clear', blur: 12, opacity: 0.44, rim: 1, lensing: 1.15, brightness: 1, svg: true },
     },
   },
   {
@@ -90,7 +90,7 @@ const BUILTIN_INPUTS: ThemeInput[] = [
     version: 1,
     author: 'Qomu',
     license: 'AGPL-3.0',
-    description: 'Navegación de vidrio esmerilado oscuro con acentos azules.',
+    description: 'Vidrio oscuro con refracción del contenido en movimiento.',
     tokens: {
       background: 'oklch(0.18 0.02 265)',
       foreground: 'oklch(0.96 0.01 260)',
@@ -130,7 +130,7 @@ const BUILTIN_INPUTS: ThemeInput[] = [
     },
     options: {
       effects: ['glass'],
-      glass: { material: 'regular', grid: 0.22, caustics: 0.15, svg: true },
+      glass: { material: 'clear', blur: 12, opacity: 0.44, rim: 1, lensing: 1.15, brightness: 1, svg: true },
     },
   },
   {

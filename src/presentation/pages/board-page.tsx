@@ -293,7 +293,11 @@ export function BoardPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="shrink-0 border-b border-border/70 px-4 py-2 sm:px-5">
+      <div
+        data-glass-surface="chrome"
+        data-glass-chrome="board-tools"
+        className="relative shrink-0 border-b border-border/70 px-4 py-2 sm:px-5"
+      >
         <div className="scrollbar-none flex items-center gap-2 overflow-x-auto">
           <BoardStatusBadge status={board.status} />
           <div className="relative shrink-0">

@@ -1,16 +1,48 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTheme } from '../theme-provider'
+import { attachGlassRefraction, supportsBackdropRefraction, trackGlassHighlights } from './glass-refraction'
 import { startGlassShader } from './glass-webgl'
 
 export function GlassBackdrop() {
   const { theme } = useTheme()
   const glass = theme.options.glass
   const enabled = theme.options.effects.includes('glass') && Boolean(glass)
+  const definitionsRef = useRef<SVGDefsElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [webgl, setWebgl] = useState(false)
   const renderer = glass?.renderer ?? 'auto'
   const quality = glass?.quality ?? 'auto'
+
+  useEffect(() => {
+    const definitions = definitionsRef.current
+    if (!glass || !enabled || !definitions) return
+
+    const opaque = window.matchMedia('(prefers-reduced-transparency: reduce), (forced-colors: active)')
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
+    let detach: (() => void) | undefined
+    let stopHighlights: (() => void) | undefined
+    const update = () => {
+      detach?.()
+      stopHighlights?.()
+      detach = undefined
+      stopHighlights = undefined
+      if (opaque.matches) return
+      if (glass.renderer === 'auto' && glass.svg && glass.lensing > 0 && supportsBackdropRefraction()) {
+        detach = attachGlassRefraction(definitions, glass)
+      }
+      if (!motion.matches) stopHighlights = trackGlassHighlights()
+    }
+    update()
+    opaque.addEventListener('change', update)
+    motion.addEventListener('change', update)
+    return () => {
+      opaque.removeEventListener('change', update)
+      motion.removeEventListener('change', update)
+      detach?.()
+      stopHighlights?.()
+    }
+  }, [enabled, glass])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -25,7 +57,7 @@ export function GlassBackdrop() {
       stop?.()
       stop = undefined
       setWebgl(false)
-      if (renderer === 'css' || cssOnly.matches) return
+      if (renderer !== 'webgl' || cssOnly.matches) return
 
       stop = startGlassShader(canvas, {
         lightMode: theme.scheme === 'light',
@@ -53,25 +85,9 @@ export function GlassBackdrop() {
       data-renderer={webgl ? 'webgl' : 'css'}
       aria-hidden="true"
     >
-      <div className="glass-backdrop-mesh" />
+      {renderer === 'webgl' && <div className="glass-backdrop-mesh" />}
       <svg className="glass-backdrop-filter" focusable="false">
-        <filter id="glass-refraction" x="-20%" y="-20%" width="140%" height="140%">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.008 0.014"
-            numOctaves="2"
-            seed="5"
-            result="noise"
-          />
-          <feGaussianBlur in="noise" stdDeviation="1.6" result="soft" />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="soft"
-            scale="18"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
+        <defs ref={definitionsRef} />
       </svg>
       <canvas
         ref={canvasRef}

@@ -101,63 +101,105 @@ html[data-effects~='glass'] [data-slot='app-shell'] {
   }
 }
 
-/* ---------------- Superficies ---------------- */
+.kanban-column-heading {
+  background: color-mix(in oklab, var(--muted) 30%, var(--background));
+}
+
+html[data-effects~='glass'] [data-glass-column] {
+  background: color-mix(in oklab, var(--muted) 25%, var(--background));
+}
+
+html[data-effects~='glass'] [data-glass-column][data-drag-over] {
+  background: color-mix(in oklab, var(--primary) 8%, var(--background));
+}
+
+html[data-effects~='glass'] [data-glass-column] > div {
+  scroll-padding-block-start: 4rem;
+}
 
 html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay']) {
+  --glass-softness: max(8px, var(--glass-blur));
+  --glass-body: clamp(48%, calc(var(--glass-surface-alpha) * 100% + 16%), 90%);
+  --glass-edge: max(20%, calc(var(--glass-body) - 27%));
+  --glass-sheen: rgb(255 255 255 / 0.19);
+  --glass-rim-lit: rgb(255 255 255 / 0.72);
+  --glass-rim-shade: rgb(7 15 26 / 0.48);
   border-color: transparent !important;
-  background: color-mix(
-    in srgb,
-    var(--glass-tint) calc(var(--glass-surface-alpha) * 100%),
-    transparent
-  ) !important;
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation))
-    brightness(var(--glass-brightness));
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturation))
-    brightness(var(--glass-brightness));
+  background:
+    radial-gradient(14rem circle at var(--glass-light-x, 20%) var(--glass-light-y, -6rem),
+      var(--glass-sheen), transparent 70%),
+    linear-gradient(160deg,
+      color-mix(in srgb, var(--glass-tint) var(--glass-edge), transparent),
+      color-mix(in srgb, var(--glass-tint) var(--glass-body), transparent) 45% 72%,
+      color-mix(in srgb, var(--glass-tint) var(--glass-edge), transparent)) !important;
+  -webkit-backdrop-filter: blur(var(--glass-softness)) saturate(var(--glass-saturation));
+  backdrop-filter: blur(var(--glass-softness)) saturate(var(--glass-saturation));
   box-shadow:
-    inset calc(sin(var(--glass-light-angle)) * -12px) calc(cos(var(--glass-light-angle)) * 12px)
-      20px -14px rgb(255 255 255 / calc(0.24 * var(--glass-rim-strength))),
-    inset 0 0 18px rgb(255 255 255 / calc(0.06 * var(--glass-lensing))),
-    0 1px 2px rgb(0 0 0 / calc(0.18 * var(--glass-shadow))),
-    0 18px 50px -18px rgb(0 0 0 / calc(0.55 * var(--glass-shadow)));
+    inset 0 1px 1px rgb(255 255 255 / calc(0.38 * var(--glass-rim-strength))),
+    inset 0 -1px 1px rgb(255 255 255 / calc(0.16 * var(--glass-rim-strength))),
+    inset 0 0 9px rgb(255 255 255 / calc(0.13 * var(--glass-rim-strength))),
+    0 2px 5px rgb(7 15 26 / calc(0.18 * var(--glass-shadow))),
+    0 9px 22px -10px rgb(7 15 26 / calc(0.42 * var(--glass-shadow)));
+}
+
+html[data-effects~='glass'].dark :is([data-glass-surface='chrome'], [data-glass-surface='overlay']) {
+  --glass-rim-shade: rgb(125 163 210 / 0.18);
+}
+
+html[data-effects~='glass'] [data-glass-refraction='live'] {
+  --glass-softness: min(var(--glass-blur), 2px);
+  backdrop-filter: var(--glass-displacement) blur(var(--glass-softness)) saturate(var(--glass-saturation))
+    brightness(var(--glass-brightness));
 }
 
 html[data-effects~='glass'] [data-glass-surface='overlay'] {
-  --glass-blur: 32px;
-  background: color-mix(
-    in srgb,
-    var(--glass-tint) calc(min(0.88, var(--glass-surface-alpha) + 0.16) * 100%),
-    transparent
-  ) !important;
-  box-shadow:
-    inset calc(sin(var(--glass-light-angle)) * -14px) calc(cos(var(--glass-light-angle)) * 14px)
-      24px -16px rgb(255 255 255 / calc(0.3 * var(--glass-rim-strength))),
-    inset 0 0 22px rgb(255 255 255 / calc(0.08 * var(--glass-lensing))),
-    0 2px 6px rgb(0 0 0 / 0.24),
-    0 32px 80px -20px rgb(0 0 0 / calc(0.65 * var(--glass-shadow)));
+  --glass-body: clamp(76%, calc(var(--glass-surface-alpha) * 100% + 31%), 95%);
+  --glass-edge: max(57%, calc(var(--glass-body) - 15%));
 }
 
-html[data-effects~='glass'] [data-glass-surface='chrome'] {
-  --glass-blur: 30px;
-  --glass-saturation: 1.5;
-  background: color-mix(
-    in srgb,
-    var(--glass-tint) calc(min(0.9, var(--glass-surface-alpha) + 0.1) * 100%),
-    transparent
-  ) !important;
+html[data-effects~='glass'] [data-glass-chrome='column'] {
+  top: 0.4rem;
+  margin: 0.4rem 0.4rem 0.6rem;
+  padding: 0.38rem 0.55rem;
+  min-height: 2.55rem;
+  border-radius: 1rem;
 }
 
-html[data-effects~='glass'] [data-glass-chrome='sidebar'] {
-  box-shadow:
-    inset -1px 0 0 rgb(255 255 255 / calc(0.12 * var(--glass-rim-strength))),
-    inset -18px 0 40px -30px rgb(255 255 255 / 0.3);
+html[data-effects~='glass'] .kanban-column-name {
+  font-size: 0.68rem;
+  letter-spacing: 0.055em;
+}
+
+html[data-effects~='glass'] #desktop-sidebar {
+  border-inline-end: 0;
+}
+
+html[data-effects~='glass'] #desktop-sidebar [data-glass-chrome='sidebar'] {
+  height: calc(100% - 0.8rem);
+  margin: 0.4rem 0.15rem 0.4rem 0.45rem;
+  border-radius: 1.25rem;
+}
+
+html[data-effects~='glass'] [data-glass-chrome='board-tools'] {
+  z-index: 11;
+  margin: 0.35rem 0.7rem 0;
+  border-radius: 1.15rem;
 }
 
 html[data-effects~='glass'] [data-glass-chrome='topbar'] {
-  border-color: rgb(255 255 255 / 0.1) !important;
-  box-shadow:
-    inset 0 -1px 0 rgb(255 255 255 / calc(0.1 * var(--glass-rim-strength))),
-    inset 0 16px 30px -28px rgb(255 255 255 / 0.4);
+  z-index: 12;
+  margin: 0.4rem 0.7rem 0.2rem;
+  border-radius: 1.2rem;
+}
+
+html[data-effects~='glass'] [data-slot='sheet-content'][data-side='right'] {
+  border-start-start-radius: 1.35rem;
+  border-end-start-radius: 1.35rem;
+}
+
+html[data-effects~='glass'] [data-slot='sheet-content'][data-side='left'] {
+  border-start-end-radius: 1.35rem;
+  border-end-end-radius: 1.35rem;
 }
 
 html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'])::after {
@@ -169,73 +211,35 @@ html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surfa
   border-radius: inherit;
   pointer-events: none;
   background:
-    conic-gradient(
-      from calc(var(--glass-light-angle) - var(--glass-light-spread) / 2),
-      transparent 0deg,
-      rgb(255 255 255 / calc(0.9 * var(--glass-rim-strength)))
-        calc(var(--glass-light-spread) / 2),
-      transparent var(--glass-light-spread),
-      transparent 180deg,
-      rgb(255 255 255 / calc(0.3 * var(--glass-rim-strength)))
-        calc(180deg + var(--glass-light-spread) / 2),
-      transparent calc(180deg + var(--glass-light-spread))
-    ),
-    linear-gradient(rgb(255 255 255 / 0.12), rgb(255 255 255 / 0.12));
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box exclude,
-    linear-gradient(#000 0 0);
-}
-
-html[data-effects~='glass'][data-glass-svg='on']
-  :is([data-glass-surface='chrome'], [data-glass-surface='overlay'])::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: calc(var(--glass-grid) * 0.6);
-  background-image:
-    linear-gradient(rgb(255 255 255 / 0.35) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 255 255 / 0.35) 1px, transparent 1px),
-    radial-gradient(circle at 30% 20%, rgb(255 255 255 / 0.5), transparent 55%);
-  background-size:
-    48px 48px,
-    48px 48px,
-    100% 100%;
-  filter: url('#glass-refraction');
-  mix-blend-mode: soft-light;
+    radial-gradient(8rem circle at var(--glass-light-x, -10%) var(--glass-light-y, -3rem),
+      var(--glass-rim-lit), transparent),
+    linear-gradient(var(--glass-light-angle),
+      var(--glass-rim-lit), var(--glass-rim-shade) 38% 67%, var(--glass-rim-lit));
+  opacity: min(1, var(--glass-rim-strength));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
 }
 
 html[data-effects~='glass'] :is([data-slot='dialog-overlay'], [data-slot='sheet-overlay']) {
-  background: rgb(3 5 8 / 0.34) !important;
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  background: rgb(9 16 26 / 0.21) !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
-/* En móvil el material se aprecia en la navegación sin animar el fondo. */
-@media (max-width: 1023px), (pointer: coarse) {
-  .glass-backdrop-mesh {
-    animation: none;
+@media (prefers-reduced-motion: no-preference) {
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'])
+    [data-slot='button'] {
+    transition: scale 220ms cubic-bezier(.2, .9, .25, 1.4), background-color 150ms ease;
   }
 
-  html[data-effects~='glass'] [data-glass-surface='chrome'] {
-    --glass-blur: 18px;
-    background: color-mix(in srgb, var(--glass-tint) 58%, transparent) !important;
-  }
-
-  html[data-effects~='glass'] [data-glass-surface='overlay'] {
-    --glass-blur: 20px;
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'])
+    [data-slot='button']:active {
+    scale: 0.92;
   }
 }
 
-/* ---------------- Fallbacks ---------------- */
-
-@media (prefers-reduced-motion: reduce) {
+@media (max-width: 1023px), (pointer: coarse), (prefers-reduced-motion: reduce) {
   .glass-backdrop-mesh {
     animation: none;
   }
@@ -254,15 +258,12 @@ html[data-effects~='glass'] :is([data-slot='dialog-overlay'], [data-slot='sheet-
     backdrop-filter: none;
   }
 
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'])::before,
   html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'])::after {
     content: none;
   }
 
   html[data-effects~='glass'] :is([data-slot='dialog-overlay'], [data-slot='sheet-overlay']) {
     background: var(--overlay) !important;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
   }
 }
 
@@ -276,5 +277,9 @@ html[data-effects~='glass'] :is([data-slot='dialog-overlay'], [data-slot='sheet-
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay']) {
     background: var(--background) !important;
+  }
+
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'])::after {
+    content: none;
   }
 }
