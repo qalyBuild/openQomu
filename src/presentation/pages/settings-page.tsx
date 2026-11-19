@@ -178,7 +178,7 @@ export function SettingsPage() {
           </TabsList>
 
           <TabsContent value="general" className="mt-5 space-y-4">
-            <form onSubmit={saveWorkspace} className="rounded-2xl border bg-card/60 p-5">
+            <form data-glass-surface="panel" onSubmit={saveWorkspace} className="rounded-2xl border bg-card/60 p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-sm font-semibold">Identidad del espacio</h2>
@@ -266,7 +266,7 @@ export function SettingsPage() {
             </form>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border bg-card/60 p-5">
+              <div data-glass-surface="panel" className="rounded-2xl border bg-card/60 p-5">
                 <h2 className="flex items-center gap-2 text-sm font-semibold">
                   <Users className="size-4 text-muted-foreground" /> Equipo
                 </h2>
@@ -292,7 +292,7 @@ export function SettingsPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border bg-card/60 p-5">
+              <div data-glass-surface="panel" className="rounded-2xl border bg-card/60 p-5">
                 <h2 className="flex items-center gap-2 text-sm font-semibold">
                   <ShieldCheck className="size-4 text-muted-foreground" /> Acceso
                 </h2>
@@ -310,7 +310,7 @@ export function SettingsPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border bg-card/60 p-5">
+            <div data-glass-surface="panel" className="rounded-2xl border bg-card/60 p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 className="flex items-center gap-2 text-sm font-semibold">
@@ -404,7 +404,7 @@ export function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="profile" className="mt-5">
-            <form onSubmit={saveProfile} className="rounded-2xl border bg-card/60 p-5">
+            <form data-glass-surface="panel" onSubmit={saveProfile} className="rounded-2xl border bg-card/60 p-5">
               <h2 className="text-sm font-semibold">Tu perfil</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 Así te verá el equipo en mensajes, tareas y documentos.
@@ -466,7 +466,7 @@ export function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="notifications" className="mt-5 space-y-4">
-            <div className="rounded-2xl border bg-card/60 p-5">
+            <div data-glass-surface="panel" className="rounded-2xl border bg-card/60 p-5">
               <h2 className="text-sm font-semibold">Notificaciones</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 Elige qué avisos recibes y cómo suenan. La apariencia ahora se elige en Temas.
@@ -485,7 +485,7 @@ export function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="danger" className="mt-5 space-y-4">
-            <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5">
+            <div data-glass-surface="panel" className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5">
               <h2 className="flex items-center gap-2 text-sm font-semibold text-destructive">
                 <AlertTriangle className="size-4" /> Zona de peligro
               </h2>

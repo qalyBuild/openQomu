@@ -132,7 +132,7 @@ function EditorToolbar({ editor }: { editor: Editor }) {
   }
 
   return (
-    <div className="sticky top-0 z-20 flex flex-wrap items-center gap-0.5 border-b border-border/70 bg-background/90 py-1.5 backdrop-blur-xl">
+    <div data-glass-surface="chrome" className="sticky top-0 z-20 flex flex-wrap items-center gap-0.5 border-b border-border/70 bg-background/90 py-1.5 backdrop-blur-xl">
       <ToolbarButton
         active={editor.isActive('bold')}
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -583,7 +583,7 @@ function PageEditor({
 
           <div className="openqomu-editor mt-6">
             {editor ? <EditorToolbar editor={editor} /> : <Skeleton className="h-9 w-full" />}
-            <div className="pt-5">
+            <div data-glass-surface="panel" data-glass-document className="pt-5">
               {editor ? (
                 <EditorContent editor={editor} />
               ) : (

@@ -19,7 +19,7 @@ export function NotificationPreferences() {
   const canPreview = soundEnabled && volume > 0
 
   return (
-    <div className="rounded-2xl border bg-card/60 p-5">
+    <div data-glass-surface="panel" className="rounded-2xl border bg-card/60 p-5">
       <h2 className="flex items-center gap-2 text-sm font-semibold">
         <Bell className="size-4" /> Notificaciones
       </h2>

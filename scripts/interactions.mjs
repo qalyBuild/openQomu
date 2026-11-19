@@ -71,7 +71,10 @@ async function checkThemes(workspaceId) {
   }
   for (const id of ['liquid-glass-light', 'liquid-glass-dark', 'qomu-light', 'prueba-personalizada', 'qomu-dark']) {
     await applyTheme(page, id)
-    if (id === 'liquid-glass-dark') await verifyDashboardGlass(workspaceId)
+    if (id === 'liquid-glass-dark') {
+      await verifyDashboardGlass(workspaceId)
+      await verifyWorkspaceGlass(workspaceId)
+    }
     await page.goto(boardUrl)
     await page.waitForFunction((value) => document.documentElement.dataset.theme === value, id)
     await themedCard.click()
@@ -137,6 +140,28 @@ async function checkThemes(workspaceId) {
   }
   console.log('[themes] tareas accesibles con ratón, teclado, enlace y toque')
 
+}
+
+async function verifyWorkspaceGlass(workspaceId) {
+  const routes = {
+    'c/ch-general': "[data-glass-chrome='composer']",
+    boards: "[data-slot='card']",
+    'boards/b-producto': "[data-glass-chrome='column']",
+    pages: "[data-glass-surface='panel']",
+    'pages/p-bienvenida': "[data-glass-document]",
+    files: "[data-glass-surface='panel']",
+    members: "[data-glass-surface='panel']",
+    themes: "[data-theme-id='liquid-glass-dark']",
+    'settings?tab=profile': "form[data-glass-surface='panel']",
+    'settings?tab=notifications': "[data-glass-surface='panel']",
+    'settings?tab=app': "[data-glass-surface='panel']",
+  }
+  for (const [route, selector] of Object.entries(routes)) {
+    await page.goto(`${BASE}/w/${workspaceId}/${route}`)
+    const workspace = page.locator('[data-slot="app-shell"] main')
+    await workspace.locator(`${selector}[data-glass-refraction="live"]`).first().waitFor()
+  }
+  console.log('[glass] refracción activa en las pestañas del espacio')
 }
 
 async function verifyDashboardGlass(workspaceId) {

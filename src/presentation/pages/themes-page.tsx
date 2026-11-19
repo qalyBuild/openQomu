@@ -79,6 +79,7 @@ function ThemeCard({
   return (
     <div
       data-theme-id={theme.id}
+      data-glass-surface="panel"
       className={cn(
         'overflow-hidden rounded-xl border bg-card text-start transition-colors',
         active ? 'border-primary/60 ring-1 ring-primary/30' : 'hover:border-border',
@@ -263,7 +264,7 @@ export function ThemesPage() {
           ))}
         </div>
 
-        <section className="rounded-2xl border bg-card/60 p-5">
+        <section data-glass-surface="panel" className="rounded-2xl border bg-card/60 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold">Comunidad</h2>

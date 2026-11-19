@@ -126,7 +126,7 @@ html[data-effects~='glass'] [data-glass-column] > div {
   scroll-padding-block-start: 4rem;
 }
 
-html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel']) {
+html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel']))) {
   --glass-softness: max(8px, var(--glass-blur));
   --glass-body: clamp(48%, calc(var(--glass-surface-alpha) * 100% + 16%), 90%);
   --glass-edge: max(20%, calc(var(--glass-body) - 27%));
@@ -148,20 +148,38 @@ html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surfa
     0 9px 22px -10px rgb(7 15 26 / calc(0.42 * var(--glass-shadow)));
 }
 
-html[data-effects~='glass'].dark :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel']) {
+html[data-effects~='glass'].dark :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel']))) {
   --glass-rim-shade: rgb(125 163 210 / 0.18);
 }
 
-html[data-effects~='glass'] :where([data-glass-dashboard]) [data-glass-surface='panel'] {
-  position: relative;
+html[data-effects~='glass'] :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel'])) {
   --glass-body: 66%;
   --glass-edge: 26%;
   --glass-softness: 6px;
 }
 
-html[data-effects~='glass'].dark :where([data-glass-dashboard]) [data-glass-surface='panel'] {
+html[data-effects~='glass'].dark :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel'])) {
   --glass-body: 58%;
   --glass-edge: 21%;
+}
+
+html[data-effects~='glass'] [data-glass-chat] {
+  background: transparent;
+}
+
+html[data-effects~='glass'] [data-glass-chrome='composer'] {
+  border-start-start-radius: 1.25rem;
+  border-start-end-radius: 1.25rem;
+}
+
+html[data-effects~='glass'] [data-glass-document] {
+  border-radius: 1.15rem;
+  padding: 1.25rem;
+}
+
+html[data-effects~='glass'] [data-glass-selected] {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
 }
 
 html[data-effects~='glass'] [data-glass-dashboard] .recharts-cartesian-axis-tick-value {
@@ -224,7 +242,7 @@ html[data-effects~='glass'] [data-slot='sheet-content'][data-side='left'] {
   border-end-end-radius: 1.35rem;
 }
 
-html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel'])::after {
+html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel'])))::after {
   content: '';
   position: absolute;
   z-index: 2;
@@ -248,12 +266,12 @@ html[data-effects~='glass'] :is([data-slot='dialog-overlay'], [data-slot='sheet-
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel'])
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel'])))
     [data-slot='button'] {
     transition: scale 220ms cubic-bezier(.2, .9, .25, 1.4), background-color 150ms ease;
   }
 
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel'])
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel'])))
     [data-slot='button']:active {
     scale: 0.92;
   }
@@ -274,7 +292,7 @@ html[data-effects~='glass'] :is([data-slot='dialog-overlay'], [data-slot='sheet-
     background: var(--background) !important;
   }
 
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel']) {
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel']))) {
     background: var(--background) !important;
     border-color: var(--border) !important;
     box-shadow: none;
@@ -282,7 +300,7 @@ html[data-effects~='glass'] :is([data-slot='dialog-overlay'], [data-slot='sheet-
     backdrop-filter: none;
   }
 
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel'])::after {
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel'])))::after {
     content: none;
   }
 
@@ -292,18 +310,18 @@ html[data-effects~='glass'] :is([data-slot='dialog-overlay'], [data-slot='sheet-
 }
 
 @media (forced-colors: active) {
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel']) {
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel']))) {
     background: Canvas !important;
     border-color: CanvasText !important;
   }
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel']) {
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel']))) {
     background: var(--background) !important;
   }
 
-  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-glass-dashboard]) [data-glass-surface='panel'])::after {
+  html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surface='overlay'], :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel'])))::after {
     content: none;
   }
 }

@@ -126,7 +126,7 @@ export function AppDownload() {
   if (!apkUrl) return null
 
   return (
-    <div className="rounded-2xl border bg-card/60 p-5">
+    <div data-glass-surface="panel" className="rounded-2xl border bg-card/60 p-5">
       <div className="flex items-start gap-3">
         <span className="grid size-10 shrink-0 place-items-center rounded-xl border bg-background text-primary">
           <Smartphone className="size-4" />
