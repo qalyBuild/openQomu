@@ -29,14 +29,16 @@ import { useWorkspaceData } from '@/app/workspace-data-provider'
 import { useWorkspaceTasks } from '@/presentation/hooks/use-data'
 import { buildDashboard } from '@/domain/services/analytics-service'
 import { isTaskCompleted } from '@/domain/services/task-service'
-import { mergeBoardColumns } from '@/domain/entities/kanban'
+import { mergeBoardColumns, type Task } from '@/domain/entities/kanban'
 import { PRIORITY_META } from '@/domain/entities/identity'
-import { formatRelative } from '@/lib/date'
+import { addDays, dayKey, formatRelative, startOfDay } from '@/lib/date'
 import { isRecentlyActive } from '@/lib/presence'
 import { UserAvatar, AvatarStack } from '@/presentation/components/common/user-avatar'
 import { EmptyState } from '@/presentation/components/common/empty-state'
 import { DueDateBadge, PriorityBadge } from '@/presentation/components/common/badges'
 import { BoardDialog } from '@/presentation/features/kanban/board-dialog'
+import { useNotifications } from '@/presentation/features/notifications/notifications-provider'
+import { notificationKey } from '@/domain/services/notification-service'
 import { EvilAreaChart } from '@/components/evilcharts/charts/recharts-area-chart'
 import { EvilBarChart } from '@/components/evilcharts/charts/recharts-bar-chart'
 import { EvilPieChart } from '@/components/evilcharts/charts/recharts-pie-chart'
@@ -52,11 +54,67 @@ const workloadConfig = {
   completed: { label: 'Completadas', colors: { light: ['#14b8a6'], dark: ['#2dd4bf'] } },
 } satisfies ChartConfig
 
-function greeting(now: Date): string {
-  const hour = now.getHours()
-  if (hour < 12) return 'Buenos días'
-  if (hour < 20) return 'Buenas tardes'
-  return 'Buenas noches'
+const overviewDate = new Intl.DateTimeFormat('es-ES', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+})
+const overviewLinkClass = 'font-medium text-foreground underline underline-offset-4 hover:text-primary'
+
+function DashboardOverview({ tasksByBoard }: { tasksByBoard: Record<string, Task[]> }) {
+  const { workspace, uid, boards, channels } = useWorkspaceData()
+  const { byTarget } = useNotifications()
+  const [today, setToday] = useState(() => new Date())
+
+  useEffect(() => {
+    const midnight = startOfDay(addDays(today, 1)).getTime()
+    const timer = window.setTimeout(() => setToday(new Date()), midnight - Date.now())
+    return () => window.clearTimeout(timer)
+  }, [today])
+
+  const assignedBoards = boards.filter((board) =>
+    tasksByBoard[board.id]?.some((task) =>
+      task.assigneeIds.includes(uid) && task.priority !== 'paused' && !isTaskCompleted(task, board.columns),
+    ),
+  )
+  const unreadChannels = channels.filter((channel) => byTarget[notificationKey('chat', channel.id)] > 0)
+
+  return (
+    <div className="min-w-0 space-y-1.5">
+      <h1 className="text-2xl font-semibold tracking-[-0.03em] first-letter:uppercase sm:text-3xl">
+        <time dateTime={dayKey(today)}>{overviewDate.format(today)}</time>
+      </h1>
+      {assignedBoards.length > 0 && (
+        <p className="break-words text-sm text-muted-foreground">
+          Tienes tareas asignadas en{' '}
+          {assignedBoards.map((board, index) => (
+            <span key={board.id}>
+              {index > 0 && ', '}
+              <Link className={overviewLinkClass} to={`/w/${workspace.id}/boards/${board.id}`}>
+                {board.name}
+              </Link>
+            </span>
+          ))}
+          .
+        </p>
+      )}
+      {unreadChannels.length > 0 && (
+        <p className="break-words text-sm text-muted-foreground">
+          Tienes mensajes nuevos en{' '}
+          {unreadChannels.map((channel, index) => (
+            <span key={channel.id}>
+              {index > 0 && ', '}
+              <Link className={overviewLinkClass} to={`/w/${workspace.id}/c/${channel.id}`}>
+                #{channel.name}
+              </Link>
+            </span>
+          ))}
+          .
+        </p>
+      )}
+    </div>
+  )
 }
 
 function StatCard({
@@ -145,8 +203,6 @@ export function DashboardPage() {
       { label: status.label, colors: { light: [status.color], dark: [status.color] } },
     ]),
   ) satisfies ChartConfig
-  const today = new Date()
-  const firstName = (profile?.displayName ?? 'equipo').split(' ')[0]
   const recentTasks = [...tasks]
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .slice(0, 5)
@@ -158,10 +214,7 @@ export function DashboardPage() {
     return (
       <div className="scrollbar-thin h-full overflow-y-auto p-5 sm:p-8">
         <div className="mx-auto max-w-3xl">
-          <h1 className="text-2xl font-semibold tracking-tight">Tu espacio está listo</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Crea el primer tablero para ver métricas y empezar a organizar el trabajo.
-          </p>
+          <DashboardOverview tasksByBoard={tasksByBoard} />
           <EmptyState
             className="mt-8"
             icon={KanbanSquare}
@@ -186,17 +239,7 @@ export function DashboardPage() {
     <div className="scrollbar-thin h-full overflow-y-auto">
       <div className="mx-auto max-w-6xl space-y-6 p-5 pb-12 sm:p-8">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-primary">
-              {today.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
-            <h1 className="mt-1.5 text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
-              {greeting(today)}, {firstName} <span className="inline-block">👋</span>
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Esto es lo que está pasando en <strong className="font-medium text-foreground">{workspace.name}</strong>.
-            </p>
-          </div>
+          <DashboardOverview tasksByBoard={tasksByBoard} />
           <div className="flex flex-wrap items-center gap-2">
             <Select value={boardId} onValueChange={setBoardId}>
               <SelectTrigger className="h-9 w-[240px] bg-card/70 text-xs">
