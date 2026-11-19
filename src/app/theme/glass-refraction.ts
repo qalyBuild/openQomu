@@ -159,28 +159,3 @@ export function attachGlassRefraction(definitions: SVGDefsElement, material: Res
     resize.disconnect()
   }
 }
-
-export function trackGlassHighlights() {
-  let frame = 0
-  const move = (event: PointerEvent) => {
-    const surface = (event.target as Element | null)?.closest<HTMLElement>(SURFACES)
-    if (!surface) return
-    cancelAnimationFrame(frame)
-    frame = requestAnimationFrame(() => {
-      const { left, top } = surface.getBoundingClientRect()
-      surface.style.setProperty('--glass-light-x', `${event.clientX - left}px`)
-      surface.style.setProperty('--glass-light-y', `${event.clientY - top}px`)
-    })
-  }
-  document.addEventListener('pointermove', move, { passive: true })
-  document.addEventListener('pointerdown', move, { passive: true })
-  return () => {
-    document.removeEventListener('pointermove', move)
-    document.removeEventListener('pointerdown', move)
-    cancelAnimationFrame(frame)
-    for (const surface of document.querySelectorAll<HTMLElement>(SURFACES)) {
-      surface.style.removeProperty('--glass-light-x')
-      surface.style.removeProperty('--glass-light-y')
-    }
-  }
-}

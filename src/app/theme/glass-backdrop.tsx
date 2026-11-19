@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTheme } from '../theme-provider'
-import { attachGlassRefraction, supportsBackdropRefraction, trackGlassHighlights } from './glass-refraction'
+import { attachGlassRefraction, supportsBackdropRefraction } from './glass-refraction'
 import { startGlassShader } from './glass-webgl'
 
 export function GlassBackdrop() {
@@ -19,28 +19,20 @@ export function GlassBackdrop() {
     if (!glass || !enabled || !definitions) return
 
     const opaque = window.matchMedia('(prefers-reduced-transparency: reduce), (forced-colors: active)')
-    const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
     let detach: (() => void) | undefined
-    let stopHighlights: (() => void) | undefined
     const update = () => {
       detach?.()
-      stopHighlights?.()
       detach = undefined
-      stopHighlights = undefined
       if (opaque.matches) return
       if (glass.renderer === 'auto' && glass.svg && glass.lensing > 0 && supportsBackdropRefraction()) {
         detach = attachGlassRefraction(definitions, glass)
       }
-      if (!motion.matches) stopHighlights = trackGlassHighlights()
     }
     update()
     opaque.addEventListener('change', update)
-    motion.addEventListener('change', update)
     return () => {
       opaque.removeEventListener('change', update)
-      motion.removeEventListener('change', update)
       detach?.()
-      stopHighlights?.()
     }
   }, [enabled, glass])
 

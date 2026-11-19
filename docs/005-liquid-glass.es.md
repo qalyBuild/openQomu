@@ -4,7 +4,7 @@
 
 El tema web de openQomu sigue la jerarquía descrita por [Apple en su introducción a Liquid Glass](https://developer.apple.com/documentation/technologyoverviews/liquid-glass) y en las [guías de materiales](https://developer.apple.com/design/human-interface-guidelines/materials). El vidrio identifica navegación y controles por encima del contenido. En el tablero las tarjetas se desplazan por debajo de las cabeceras de columna, y el detalle deja ver el tablero debajo. Los indicadores y gráficos del resumen usan vidrio tintado sobre un fondo de bandas azules. La pantalla baja la intensidad del fondo en el tema claro y lo retira con reducción de transparencia o colores forzados.
 
-Un mapa de desplazamiento generado para el tamaño de cada superficie aplica refracción al contenido que Chromium compone en ese instante. El borde curvo desvía más la imagen que el centro. Una capa de reflejos sigue el puntero o el toque y los botones se comprimen durante la pulsación. El filtrado preserva el foco y las áreas de interacción.
+Un mapa de desplazamiento generado para el tamaño de cada superficie aplica refracción al contenido que Chromium compone en ese instante. El borde curvo desvía más la imagen que el centro. Los reflejos del borde son fijos y los botones se comprimen durante la pulsación. El filtrado preserva el foco y las áreas de interacción.
 
 ## Opciones del tema
 
@@ -43,7 +43,7 @@ Un mapa de desplazamiento generado para el tamaño de cada superficie aplica ref
 
 - `chrome` cubre la navegación, las herramientas del tablero y las cabeceras de columna. `overlay` cubre diálogos, paneles, menús, popovers y selectores. Las tarjetas de tarea y su texto usan los colores del tema. El resumen aplica el material a sus paneles con el centro más tintado para mantener legibles las cifras y los gráficos.
 - La refracción funciona en Chromium de escritorio y en WebView de Android basado en Chromium compatible. Safari y Firefox usan tinte, reflejos y desenfoque CSS. Si falta el desenfoque, usan un fondo sólido.
-- La reducción de transparencia y los colores forzados dejan las superficies opacas. Con movimiento reducido se conserva el material estático y se desactivan el seguimiento de reflejos y la compresión de los botones.
+- La reducción de transparencia y los colores forzados dejan las superficies opacas. Con movimiento reducido se conserva el material estático y se desactiva la compresión de los botones.
 
 ## Criterios de aceptación
 
