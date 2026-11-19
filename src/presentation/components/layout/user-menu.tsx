@@ -1,14 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import {
-  Check,
   ChevronsUpDown,
   LogOut,
-  Monitor,
-  Moon,
   Palette,
   RotateCcw,
   Settings,
-  Sun,
   UserRound,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -18,31 +14,19 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { useAuth, useContainer } from '@/app/auth-provider'
-import { useTheme, type ThemeMode } from '@/app/theme-provider'
 import { UserAvatar } from '@/presentation/components/common/user-avatar'
 import type { Workspace } from '@/domain/entities/identity'
-import { cn } from '@/lib/utils'
 
 export function UserMenu({ workspace }: { workspace: Workspace }) {
   const { profile, session, signOut } = useAuth()
-  const { mode, setMode } = useTheme()
   const container = useContainer()
   const navigate = useNavigate()
   const name = profile?.displayName ?? session?.displayName ?? 'Mi cuenta'
   const email = profile?.email ?? session?.email ?? ''
-
-  const themeOptions: Array<{ value: ThemeMode; label: string; icon: typeof Sun }> = [
-    { value: 'light', label: 'Claro', icon: Sun },
-    { value: 'dark', label: 'Oscuro', icon: Moon },
-    { value: 'system', label: 'Sistema', icon: Monitor },
-  ]
 
   const resetDemo = async () => {
     if (!container.resetDemo) return
@@ -85,22 +69,9 @@ export function UserMenu({ workspace }: { workspace: Workspace }) {
         <DropdownMenuItem onClick={() => navigate(`/w/${workspace.id}/settings`)}>
           <Settings className="size-4" /> Ajustes del espacio
         </DropdownMenuItem>
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Palette className="size-4" /> Apariencia
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            {themeOptions.map((option) => {
-              const Icon = option.icon
-              return (
-                <DropdownMenuItem key={option.value} onClick={() => setMode(option.value)}>
-                  <Icon className="size-4" /> {option.label}
-                  <Check className={cn('ms-auto size-3.5', mode !== option.value && 'opacity-0')} />
-                </DropdownMenuItem>
-              )
-            })}
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
+        <DropdownMenuItem onClick={() => navigate(`/w/${workspace.id}/themes`)}>
+          <Palette className="size-4" /> Temas
+        </DropdownMenuItem>
         {container.mode === 'demo' && (
           <>
             <DropdownMenuSeparator />

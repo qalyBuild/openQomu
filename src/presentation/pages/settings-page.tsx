@@ -1,21 +1,19 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   AlertTriangle,
+  Bell,
   Bot,
   Check,
   Cloud,
   Database,
   HardDrive,
   LogOut,
-  Monitor,
-  Moon,
   Palette,
   Save,
   Settings,
   ShieldCheck,
   Smartphone,
-  Sun,
   Trash2,
   UserRound,
   Users,
@@ -30,7 +28,7 @@ import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth, useContainer } from '@/app/auth-provider'
 import { useWorkspaceData } from '@/app/workspace-data-provider'
-import { useTheme, type ThemeMode } from '@/app/theme-provider'
+
 import { ROLE_META } from '@/domain/entities/identity'
 import { pickWorkspaceIcon } from '@/domain/services/workspace-service'
 import { formatDate, formatRelative } from '@/lib/date'
@@ -56,11 +54,11 @@ const WORKSPACE_ICONS = ['🪐', '🚀', '✨', '🧩', '🌊', '🔭', '🎯', 
 export function SettingsPage() {
   const { workspace, members, role, uid, can, files, trashedFiles } = useWorkspaceData()
   const { session, profile, signOut, refreshProfile } = useAuth()
-  const { mode, setMode } = useTheme()
   const container = useContainer()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const tab = params.get('tab') ?? 'general'
+  const requestedTab = params.get('tab') ?? 'general'
+  const tab = requestedTab === 'appearance' ? 'notifications' : requestedTab
   const [name, setName] = useState(workspace.name)
   const [description, setDescription] = useState(workspace.description)
   const [icon, setIcon] = useState(workspace.icon)
@@ -142,12 +140,19 @@ export function SettingsPage() {
   return (
     <div className="scrollbar-thin h-full overflow-y-auto">
       <div className="mx-auto max-w-4xl space-y-6 p-5 pb-12 sm:p-8">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-primary">Configuración</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em]">Ajustes</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Personaliza tu espacio, tu perfil y la apariencia de openQomu.
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-primary">Configuración</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em]">Ajustes</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Personaliza tu espacio, tu perfil y las notificaciones.
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <Link to={`/w/${workspace.id}/themes`}>
+              <Palette className="size-3.5" /> Temas
+            </Link>
+          </Button>
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
@@ -158,8 +163,8 @@ export function SettingsPage() {
             <TabsTrigger value="profile" className="flex-none gap-1.5 text-xs">
               <UserRound className="size-3.5" /> Perfil
             </TabsTrigger>
-            <TabsTrigger value="appearance" className="flex-none gap-1.5 text-xs">
-              <Palette className="size-3.5" /> Apariencia
+            <TabsTrigger value="notifications" className="flex-none gap-1.5 text-xs">
+              <Bell className="size-3.5" /> Notificaciones
             </TabsTrigger>
             <TabsTrigger value="ai" className="flex-none gap-1.5 text-xs">
               <Bot className="size-3.5" /> IA
@@ -460,50 +465,14 @@ export function SettingsPage() {
             </form>
           </TabsContent>
 
-          <TabsContent value="appearance" className="mt-5">
+          <TabsContent value="notifications" className="mt-5 space-y-4">
             <div className="rounded-2xl border bg-card/60 p-5">
-              <h2 className="text-sm font-semibold">Apariencia</h2>
+              <h2 className="text-sm font-semibold">Notificaciones</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                Elige cómo se ve openQomu en este dispositivo.
+                Elige qué avisos recibes y cómo suenan. La apariencia ahora se elige en Temas.
               </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                {(
-                  [
-                    { value: 'light', label: 'Claro', icon: Sun, preview: 'bg-[#fbfaff]' },
-                    { value: 'dark', label: 'Oscuro', icon: Moon, preview: 'bg-[#0c0b12]' },
-                    { value: 'system', label: 'Sistema', icon: Monitor, preview: 'bg-gradient-to-r from-[#fbfaff] to-[#0c0b12]' },
-                  ] as Array<{ value: ThemeMode; label: string; icon: typeof Sun; preview: string }>
-                ).map((option) => {
-                  const Icon = option.icon
-                  const active = mode === option.value
-                  return (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setMode(option.value)}
-                      className={cn(
-                        'overflow-hidden rounded-xl border text-start transition-all',
-                        active ? 'border-primary/50 ring-1 ring-primary/30' : 'hover:border-border',
-                      )}
-                    >
-                      <div className={cn('h-20 border-b', option.preview)} />
-                      <div className="flex items-center gap-2 p-3">
-                        <Icon className="size-4 text-muted-foreground" />
-                        <span className="text-xs font-medium">{option.label}</span>
-                        {active && <Check className="ms-auto size-3.5 text-primary" />}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-              <div className="mt-5 rounded-xl bg-muted/40 p-3 text-[0.68rem] leading-relaxed text-muted-foreground">
-                La preferencia se guarda en este navegador. El tema oscuro es el predeterminado de
-                openQomu.
-              </div>
             </div>
-            <div className="mt-4">
-              <NotificationPreferences />
-            </div>
+            <NotificationPreferences />
             <PushPreferences />
           </TabsContent>
 

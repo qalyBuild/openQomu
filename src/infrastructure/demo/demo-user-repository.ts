@@ -51,13 +51,17 @@ export class DemoUserRepository implements UserRepository {
     return profile
   }
 
-  async updateProfile(uid: string, patch: Partial<Pick<User, 'displayName'>>): Promise<void> {
+  async updateProfile(
+    uid: string,
+    patch: Partial<Pick<User, 'displayName' | 'themeId'>>,
+  ): Promise<void> {
     const existing = this.store.getState().users[uid]
     if (!existing) return
     this.store.commit((draft) => {
       draft.users[uid] = {
         ...draft.users[uid],
         ...(patch.displayName ? { displayName: patch.displayName.trim() } : {}),
+        ...(patch.themeId ? { themeId: patch.themeId } : {}),
       }
       for (const member of Object.values(draft.members)) {
         if (member.uid === uid && patch.displayName) {

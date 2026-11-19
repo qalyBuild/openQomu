@@ -23,6 +23,7 @@ import {
 } from './firestore-utils'
 
 export function mapUser(id: string, data: DocumentData): User {
+  const themeId = asNullableString(data.themeId)
   return {
     id,
     displayName: asString(data.displayName, 'Usuario'),
@@ -30,6 +31,7 @@ export function mapUser(id: string, data: DocumentData): User {
     photoURL: asNullableString(data.photoURL),
     createdAt: asString(data.createdAt, new Date().toISOString()),
     lastActiveAt: asNullableString(data.lastActiveAt),
+    ...(themeId ? { themeId } : {}),
   }
 }
 

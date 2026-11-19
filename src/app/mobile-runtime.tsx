@@ -11,6 +11,20 @@ function isNativeRuntime(): boolean {
   return Boolean(capacitor?.isNativePlatform?.())
 }
 
+function themeBackground() {
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue('--background')
+    .trim()
+  if (/^#[0-9a-f]{6}$/i.test(value)) return value
+  const context = document.createElement('canvas').getContext('2d')
+  if (context && value) {
+    context.fillStyle = '#010203'
+    context.fillStyle = value
+    if (context.fillStyle !== '#010203') return context.fillStyle
+  }
+  return null
+}
+
 /**
  * Ciclo de vida nativo: registro del dispositivo, deep links y botón atrás.
  * En web es un componente inerte.
@@ -18,7 +32,7 @@ function isNativeRuntime(): boolean {
 export function MobileRuntime() {
   const container = useContainer()
   const { status, session } = useAuth()
-  const { resolvedTheme } = useTheme()
+  const { scheme } = useTheme()
   const navigate = useNavigate()
   const navigateRef = useRef(navigate)
   navigateRef.current = navigate
@@ -28,14 +42,14 @@ export function MobileRuntime() {
     if (!isNativeRuntime()) return
     void import('@capacitor/status-bar')
       .then(({ StatusBar, Style }) => {
-        const dark = resolvedTheme === 'dark'
+        const dark = scheme === 'dark'
         void StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light }).catch(() => {})
         void StatusBar.setBackgroundColor({
-          color: dark ? '#0c0b12' : '#fbfaff',
+          color: themeBackground() ?? (dark ? '#0c0b12' : '#fbfaff'),
         }).catch(() => {})
       })
       .catch(() => {})
-  }, [resolvedTheme])
+  }, [scheme])
 
   useEffect(() => {
     if (!isNativeRuntime()) return

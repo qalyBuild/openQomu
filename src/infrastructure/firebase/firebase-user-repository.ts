@@ -75,16 +75,31 @@ export class FirebaseUserRepository implements UserRepository {
     }
   }
 
-  async updateProfile(uid: string, patch: Partial<Pick<User, 'displayName'>>): Promise<void> {
-    if (!patch.displayName) return
-    const displayName = patch.displayName.trim()
-    if (!displayName) return
-    await updateDoc(userRef(uid), { displayName })
+  async updateProfile(
+    uid: string,
+    patch: Partial<Pick<User, 'displayName' | 'themeId'>>,
+  ): Promise<void> {
+    const updates: Partial<Pick<User, 'displayName' | 'themeId'>> = {}
+    if (patch.displayName !== undefined) {
+      const displayName = patch.displayName.trim()
+      if (!displayName) return
+      updates.displayName = displayName
+    }
+    if (patch.themeId !== undefined) {
+      const themeId = patch.themeId.trim()
+      if (!themeId) return
+      updates.themeId = themeId
+    }
+    if (Object.keys(updates).length === 0) return
+    await updateDoc(userRef(uid), updates)
+    if (!updates.displayName) return
     const workspaceIds = await memberWorkspaces(uid)
     if (workspaceIds.length === 0) return
     const batch = writeBatch(getFirebaseDb())
     for (const workspaceId of workspaceIds) {
-      batch.update(doc(getFirebaseDb(), 'workspaces', workspaceId, 'members', uid), { displayName })
+      batch.update(doc(getFirebaseDb(), 'workspaces', workspaceId, 'members', uid), {
+        displayName: updates.displayName,
+      })
     }
     await batch.commit()
   }
