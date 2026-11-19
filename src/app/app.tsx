@@ -7,6 +7,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import type { AppContainer } from '@/domain/ports'
 import { ContainerProvider, AuthProvider, useAuth } from './auth-provider'
 import { ThemeProvider, useTheme } from './theme-provider'
+import { ThemeProfileSync } from './theme-profile-sync'
 import { WorkspacesProvider, useWorkspaces } from './workspaces-provider'
 import { MobileRuntime } from './mobile-runtime'
 import { ErrorBoundary } from './error-boundary'
@@ -62,6 +63,11 @@ const SettingsPage = lazy(() =>
     default: module.SettingsPage,
   })),
 )
+const ThemesPage = lazy(() =>
+  import('@/presentation/pages/themes-page').then((module) => ({
+    default: module.ThemesPage,
+  })),
+)
 
 function RequireAuth() {
   const { status } = useAuth()
@@ -113,10 +119,10 @@ function AppGate() {
 }
 
 function ThemedToaster() {
-  const { resolvedTheme } = useTheme()
+  const { scheme } = useTheme()
   return (
     <Toaster
-      theme={resolvedTheme}
+      theme={scheme}
       position="bottom-right"
       closeButton
       richColors
@@ -131,6 +137,7 @@ export function App({ container }: { container: AppContainer }) {
       <ThemeProvider>
         <ContainerProvider container={container}>
           <AuthProvider>
+            <ThemeProfileSync />
             <WorkspacesProvider>
               <TooltipProvider delayDuration={200}>
                 <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '') || '/'}>
@@ -152,6 +159,7 @@ export function App({ container }: { container: AppContainer }) {
                           <Route path="pages/:pageId" element={<PageEditorPage />} />
                           <Route path="files" element={<FilesPage />} />
                           <Route path="members" element={<MembersPage />} />
+                          <Route path="themes" element={<ThemesPage />} />
                           <Route path="settings" element={<SettingsPage />} />
                           <Route path="*" element={<Navigate to="dashboard" replace />} />
                         </Route>

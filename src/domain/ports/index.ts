@@ -42,7 +42,7 @@ export interface AuthPort {
 export interface UserRepository {
   getProfile(uid: string): Promise<User | null>
   ensureProfile(user: SessionUser): Promise<User>
-  updateProfile(uid: string, patch: Partial<Pick<User, 'displayName'>>): Promise<void>
+  updateProfile(uid: string, patch: Partial<Pick<User, 'displayName' | 'themeId'>>): Promise<void>
   touch(uid: string): Promise<void>
   subscribeProfile(uid: string, callback: Subscriber<User | null>): Unsubscribe
 }

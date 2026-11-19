@@ -7,74 +7,104 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-
-export type ThemeMode = 'light' | 'dark' | 'system'
-type ResolvedTheme = 'light' | 'dark'
+import { applyTheme } from './theme/apply'
+import {
+  BUILTIN_THEMES,
+  findTheme,
+  installTheme as installStoredTheme,
+  loadInstalledThemes,
+  removeTheme as removeStoredTheme,
+  DEFAULT_THEME_ID,
+} from './theme/registry'
+import type { Theme, ThemeInput, ThemeScheme } from './theme/tokens'
 
 interface ThemeContextValue {
-  mode: ThemeMode
-  resolvedTheme: ResolvedTheme
-  setMode: (mode: ThemeMode) => void
-  toggleTheme: () => void
+  theme: Theme
+  themes: Theme[]
+  scheme: ThemeScheme
+  setTheme: (id: string) => void
+  install: (input: ThemeInput) => Theme
+  remove: (id: string) => boolean
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null)
-const STORAGE_KEY = 'openqomu.theme'
+const STORAGE_KEY = 'openqomu.theme.id'
+const LEGACY_STORAGE_KEY = 'openqomu.theme'
 
-function systemTheme(): ResolvedTheme {
-  if (typeof window === 'undefined') return 'dark'
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+function persist(id: string) {
+  try {
+    localStorage.setItem(STORAGE_KEY, id)
+  } catch {
+    // Sin almacenamiento: la elección dura la sesión.
+  }
 }
 
-function readMode(): ThemeMode {
+function migrateLegacy(): void {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored === 'light' || stored === 'dark' || stored === 'system') return stored
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY)
+    if (!legacy) return
+    localStorage.setItem(STORAGE_KEY, legacy === 'light' ? 'qomu-light' : DEFAULT_THEME_ID)
+    localStorage.removeItem(LEGACY_STORAGE_KEY)
   } catch {
-    // sin almacenamiento
+    // Sin almacenamiento.
   }
-  return 'dark'
+}
+
+function storedThemeId(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
+function initialTheme(): Theme {
+  migrateLegacy()
+  const stored = storedThemeId()
+  const theme = (stored ? findTheme(stored) : undefined) ?? findTheme(DEFAULT_THEME_ID)!
+  persist(theme.id)
+  return applyTheme(theme)
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setModeState] = useState<ThemeMode>(readMode)
-  const [system, setSystem] = useState<ResolvedTheme>(systemTheme)
+  const [theme, setThemeState] = useState<Theme>(initialTheme)
+  const [installed, setInstalled] = useState<Theme[]>(loadInstalledThemes)
 
   useEffect(() => {
-    const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const listener = (event: MediaQueryListEvent) => {
-      setSystem(event.matches ? 'dark' : 'light')
-    }
-    media.addEventListener('change', listener)
-    return () => media.removeEventListener('change', listener)
+    applyTheme(theme)
+  }, [theme])
+
+  const setTheme = useCallback((id: string) => {
+    const next = findTheme(id) ?? findTheme(DEFAULT_THEME_ID)!
+    persist(next.id)
+    applyTheme(next)
+    setThemeState(next)
   }, [])
 
-  const resolvedTheme: ResolvedTheme = mode === 'system' ? system : mode
+  const install = useCallback((input: ThemeInput) => {
+    const next = installStoredTheme(input)
+    setInstalled(loadInstalledThemes())
+    return next
+  }, [])
 
-  useEffect(() => {
-    const root = document.documentElement
-    root.classList.toggle('dark', resolvedTheme === 'dark')
-    root.style.colorScheme = resolvedTheme
-    try {
-      localStorage.setItem(STORAGE_KEY, mode)
-    } catch {
-      // sin almacenamiento
-    }
-    const meta = document.querySelector('meta[name="theme-color"]')
-    if (meta) meta.setAttribute('content', resolvedTheme === 'dark' ? '#0c0b12' : '#fbfaff')
-  }, [mode, resolvedTheme])
+  const remove = useCallback(
+    (id: string) => {
+      const removed = removeStoredTheme(id)
+      if (!removed) return false
+      setInstalled(loadInstalledThemes())
+      if (theme.id === id) {
+        setTheme(DEFAULT_THEME_ID)
+      }
+      return true
+    },
+    [setTheme, theme.id],
+  )
 
-  const setMode = useCallback((next: ThemeMode) => setModeState(next), [])
-  const toggleTheme = useCallback(() => {
-    setModeState((current) => {
-      const resolved = current === 'system' ? system : current
-      return resolved === 'dark' ? 'light' : 'dark'
-    })
-  }, [system])
+  const themes = useMemo(() => [...BUILTIN_THEMES, ...installed], [installed])
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ mode, resolvedTheme, setMode, toggleTheme }),
-    [mode, resolvedTheme, setMode, toggleTheme],
+    () => ({ theme, themes, scheme: theme.scheme, setTheme, install, remove }),
+    [theme, themes, setTheme, install, remove],
   )
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

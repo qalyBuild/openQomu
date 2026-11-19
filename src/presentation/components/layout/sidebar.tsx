@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Lock,
   MessageSquare,
+  Palette,
   PanelLeftClose,
   Plus,
   Search,
@@ -29,7 +30,7 @@ import { isRecentlyActive } from '@/lib/presence'
 import { cn } from '@/lib/utils'
 import { useNotifications } from '@/presentation/features/notifications/notifications-provider'
 import { NotificationBadge } from './notification-badge'
-import { ThemeToggle } from '@/presentation/components/common/theme-toggle'
+import { ThemeLink } from '@/presentation/components/common/theme-link'
 import { WorkspaceSwitcher } from './workspace-switcher'
 import { PageTree } from './page-tree'
 import { CreateChannelDialog } from '@/presentation/features/chat/create-channel-dialog'
@@ -600,10 +601,10 @@ export function Sidebar({
               active={location.search.includes('tab=profile')}
             />
             <SidebarLink
-              to={`/w/${workspace.id}/settings?tab=appearance`}
-              icon={FileText}
-              label="Apariencia"
-              active={location.search.includes('tab=appearance')}
+              to={`/w/${workspace.id}/themes`}
+              icon={Palette}
+              label="Temas"
+              active={location.pathname.endsWith('/themes')}
             />
           </div>
         )}
@@ -632,7 +633,7 @@ export function Sidebar({
             </div>
           </div>
         )}
-        <ThemeToggle compact={collapsed} />
+        <ThemeLink compact={collapsed} />
         <NotificationSoundToggle
           compact={collapsed}
           enabled={notifications.soundEnabled}

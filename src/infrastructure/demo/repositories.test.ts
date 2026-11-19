@@ -54,6 +54,14 @@ describe('demo auth y perfiles', () => {
     )
     expect(member?.displayName).toBe('Alex R.')
   })
+
+  it('guarda el tema elegido sin tocar el nombre', async () => {
+    const user = await login(container)
+    await container.users.updateProfile(user.id, { themeId: 'monokai' })
+    const updated = await container.users.getProfile(user.id)
+    expect(updated?.themeId).toBe('monokai')
+    expect(updated?.displayName).toBe('Alex Rivera')
+  })
 })
 
 describe('demo workspaces e invitaciones', () => {

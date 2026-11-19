@@ -13,6 +13,7 @@ export interface User {
   photoURL: string | null
   createdAt: string
   lastActiveAt: string | null
+  themeId?: string
 }
 
 export interface Workspace {

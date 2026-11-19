@@ -45,13 +45,13 @@ import { EvilPieChart } from '@/components/evilcharts/charts/recharts-pie-chart'
 import type { ChartConfig } from '@/components/evilcharts/ui/recharts-chart'
 
 const trendConfig = {
-  created: { label: 'Creadas', colors: { light: ['#8b5cf6'], dark: ['#a78bfa'] } },
-  completed: { label: 'Completadas', colors: { light: ['#10b981'], dark: ['#34d399'] } },
+  created: { label: 'Creadas', colors: { light: ['var(--chart-1)'], dark: ['var(--chart-1)'] } },
+  completed: { label: 'Completadas', colors: { light: ['var(--chart-2)'], dark: ['var(--chart-2)'] } },
 } satisfies ChartConfig
 
 const workloadConfig = {
-  open: { label: 'Abiertas', colors: { light: ['#8b5cf6'], dark: ['#a78bfa'] } },
-  completed: { label: 'Completadas', colors: { light: ['#14b8a6'], dark: ['#2dd4bf'] } },
+  open: { label: 'Abiertas', colors: { light: ['var(--chart-1)'], dark: ['var(--chart-1)'] } },
+  completed: { label: 'Completadas', colors: { light: ['var(--chart-2)'], dark: ['var(--chart-2)'] } },
 } satisfies ChartConfig
 
 const overviewDate = new Intl.DateTimeFormat('es-ES', {
@@ -277,7 +277,7 @@ export function DashboardPage() {
             value={metrics.open}
             hint={`${metrics.total} en total · pausa excluida`}
             icon={Clock3}
-            accent="#8b5cf6"
+            accent="var(--chart-1)"
             loading={loading}
           />
           <StatCard
@@ -285,7 +285,7 @@ export function DashboardPage() {
             value={metrics.completed}
             hint={`${metrics.completionRate}% de finalización`}
             icon={CheckCircle2}
-            accent="#10b981"
+            accent="var(--chart-2)"
             loading={loading}
           />
           <StatCard
@@ -293,7 +293,7 @@ export function DashboardPage() {
             value={metrics.waitingReview}
             hint={metrics.waitingReview === 0 ? 'Nada pendiente' : 'Tareas pendientes de revisión'}
             icon={Eye}
-            accent="#f59e0b"
+            accent="var(--chart-3)"
             loading={loading}
           />
           <StatCard
@@ -301,7 +301,7 @@ export function DashboardPage() {
             value={metrics.urgentOpen}
             hint={metrics.urgentOpen === 0 ? 'Sin urgencias' : 'Prioridad urgente sin completar'}
             icon={Flame}
-            accent="#fb7185"
+            accent="var(--chart-4)"
             loading={loading}
           />
         </div>
