@@ -1,7 +1,11 @@
 import type { ResolvedGlass } from './glass'
 
 const SVG = 'http://www.w3.org/2000/svg'
-const SURFACES = '[data-glass-surface="chrome"], [data-glass-surface="overlay"]'
+const SURFACES = [
+  '[data-glass-surface="chrome"]',
+  '[data-glass-surface="overlay"]',
+  '[data-glass-dashboard] [data-glass-surface="panel"]',
+].join(',')
 const MAX_SURFACES = 24
 const MAP_CACHE_LIMIT = 24
 let filterSequence = 0
