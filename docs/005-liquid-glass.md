@@ -4,7 +4,7 @@ See the [Spanish version](005-liquid-glass.es.md) for the same specification.
 
 openQomu's web theme follows the hierarchy in [Apple's Liquid Glass overview](https://developer.apple.com/documentation/technologyoverviews/liquid-glass) and [materials guidelines](https://developer.apple.com/design/human-interface-guidelines/materials). Glass identifies navigation and controls above the content. On the board, cards scroll under the column headings and the task detail shows the board through its surface. Overview metrics and charts sit on tinted glass over a wallpaper with distinct blue curves. The application softens the wallpaper in the light theme and removes it on reduced transparency or forced colors.
 
-A displacement map sized to each surface refracts the pixels Chromium composites behind it. The rounded rim displaces more than the center. Highlights follow the pointer or touch, and buttons compress while pressed. The effect preserves focus and hit targets.
+A displacement map sized to each surface refracts the pixels Chromium composites behind it. The rounded rim displaces more than the center. Rim highlights are fixed. Buttons compress while pressed. The effect preserves focus and hit targets.
 
 ## Theme options
 
@@ -15,7 +15,7 @@ Set `options.effects` to include `glass`. The optional `options.glass` object ac
 - `chrome` covers navigation, board tools, and column headings. `overlay` covers dialogs, sheets, menus, popovers and selects. Task cards and their text use theme colors. Overview panels use a more strongly tinted center to keep the figures and charts readable.
 - `renderer: "auto"` uses Chromium's SVG backdrop refraction when `svg` is enabled and `lensing` is positive. Up to 24 surfaces are processed, with overlays prioritized. `quality` limits map resolution to 256, 512, or 768 pixels on the longest side.
 - Safari and Firefox use CSS tint, highlights and backdrop blur. Browsers without blur use a solid background. `renderer: "css"` selects the CSS effect, and `renderer: "webgl"` retains the legacy decorative backdrop lens.
-- Reduced transparency and forced colors use opaque surfaces. Reduced motion keeps the static material and disables moving highlights and button compression.
+- Reduced transparency and forced colors use opaque surfaces. Reduced motion keeps the static material and disables button compression.
 
 ## Acceptance
 

@@ -130,13 +130,10 @@ html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surfa
   --glass-softness: max(8px, var(--glass-blur));
   --glass-body: clamp(48%, calc(var(--glass-surface-alpha) * 100% + 16%), 90%);
   --glass-edge: max(20%, calc(var(--glass-body) - 27%));
-  --glass-sheen: rgb(255 255 255 / 0.19);
   --glass-rim-lit: rgb(255 255 255 / 0.72);
   --glass-rim-shade: rgb(7 15 26 / 0.48);
   border-color: transparent !important;
   background:
-    radial-gradient(14rem circle at var(--glass-light-x, 20%) var(--glass-light-y, -6rem),
-      var(--glass-sheen), transparent 70%),
     linear-gradient(160deg,
       color-mix(in srgb, var(--glass-tint) var(--glass-edge), transparent),
       color-mix(in srgb, var(--glass-tint) var(--glass-body), transparent) 45% 72%,
@@ -236,8 +233,6 @@ html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surfa
   border-radius: inherit;
   pointer-events: none;
   background:
-    radial-gradient(8rem circle at var(--glass-light-x, -10%) var(--glass-light-y, -3rem),
-      var(--glass-rim-lit), transparent),
     linear-gradient(var(--glass-light-angle),
       var(--glass-rim-lit), var(--glass-rim-shade) 38% 67%, var(--glass-rim-lit));
   opacity: min(1, var(--glass-rim-strength));

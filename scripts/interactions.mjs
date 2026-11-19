@@ -195,11 +195,14 @@ async function verifyDashboardGlass(workspaceId) {
 async function verifyColumnGlass() {
   const header = page.locator('[data-column-id="todo"] [data-glass-chrome="column"]')
   await header.locator('button').first().waitFor()
-  await header.hover()
-  await page.waitForFunction(() => {
-    const element = document.querySelector('[data-column-id="todo"] [data-glass-chrome="column"]')
-    return Boolean(element?.style.getPropertyValue('--glass-light-x'))
-  })
+  const appearance = () => header.evaluate((element) => [
+    getComputedStyle(element).backgroundImage,
+    getComputedStyle(element, '::after').backgroundImage,
+  ])
+  const stationary = await appearance()
+  await header.hover({ position: { x: 14, y: 16 } })
+  await header.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+  assert.deepEqual(await appearance(), stationary)
   const viewport = page.viewportSize()
   await page.setViewportSize({ ...viewport, height: 560 })
   const geometry = await header.evaluate((element) => {
