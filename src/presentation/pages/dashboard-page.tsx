@@ -29,7 +29,7 @@ import { useWorkspaceData } from '@/app/workspace-data-provider'
 import { useWorkspaceTasks } from '@/presentation/hooks/use-data'
 import { buildDashboard } from '@/domain/services/analytics-service'
 import { isTaskCompleted } from '@/domain/services/task-service'
-import { DEFAULT_BOARD_COLUMNS, isReviewColumn, mergeBoardColumns, type BoardColumn, type Task } from '@/domain/entities/kanban'
+import { DEFAULT_BOARD_COLUMNS, isReviewColumn, mergeBoardColumns, type BoardColumn } from '@/domain/entities/kanban'
 import { PRIORITY_META } from '@/domain/entities/identity'
 import { addDays, dayKey, formatRelative, startOfDay } from '@/lib/date'
 import { isRecentlyActive } from '@/lib/presence'
@@ -63,15 +63,9 @@ const overviewDate = new Intl.DateTimeFormat('es-ES', {
 const overviewLinkClass = 'font-medium underline underline-offset-4 hover:decoration-2'
 const defaultReviewColor = DEFAULT_BOARD_COLUMNS.find(isReviewColumn)?.color ?? '#f59e0b'
 
-function DashboardOverview({
-  tasksByBoard,
-  columns,
-}: {
-  tasksByBoard: Record<string, Task[]>
-  columns: BoardColumn[]
-}) {
-  const { workspace, uid, boards, channels } = useWorkspaceData()
-  const { byTarget } = useNotifications()
+function DashboardOverview({ columns }: { columns: BoardColumn[] }) {
+  const { workspace, boards, channels } = useWorkspaceData()
+  const { byTarget, items } = useNotifications()
   const [today, setToday] = useState(() => new Date())
 
   useEffect(() => {
@@ -80,12 +74,12 @@ function DashboardOverview({
     return () => window.clearTimeout(timer)
   }, [today])
 
-  const assignedBoards = boards.filter((board) =>
-    board.status !== 'deprecated' &&
-    tasksByBoard[board.id]?.some((task) =>
-      task.assigneeIds.includes(uid) && task.priority !== 'paused' && !isTaskCompleted(task, board.columns),
-    ),
+  const relevantBoardIds = new Set(
+    items
+      .filter(({ kind }) => kind === 'review' || kind === 'overdue' || kind === 'assigned')
+      .map(({ targetId }) => targetId),
   )
+  const assignedBoards = boards.filter((board) => relevantBoardIds.has(board.id))
   const reviewColor = columns.find(isReviewColumn)?.color ?? defaultReviewColor
   const unreadChannels = channels.filter((channel) => byTarget[notificationKey('chat', channel.id)] > 0)
 
@@ -227,7 +221,7 @@ export function DashboardPage() {
     return (
       <div className="scrollbar-thin h-full overflow-y-auto p-5 sm:p-8">
         <div className="mx-auto max-w-3xl">
-          <DashboardOverview tasksByBoard={tasksByBoard} columns={activeColumns} />
+          <DashboardOverview columns={activeColumns} />
           <EmptyState
             className="mt-8"
             icon={KanbanSquare}
@@ -252,7 +246,7 @@ export function DashboardPage() {
     <div className="scrollbar-thin h-full overflow-y-auto">
       <div className="mx-auto max-w-6xl space-y-6 p-5 pb-12 sm:p-8">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <DashboardOverview tasksByBoard={tasksByBoard} columns={activeColumns} />
+          <DashboardOverview columns={activeColumns} />
           <div className="flex flex-wrap items-center gap-2">
             <Select value={boardId} onValueChange={setBoardId}>
               <SelectTrigger className="h-9 w-[240px] bg-card/70 text-xs">
