@@ -483,7 +483,7 @@ export function BoardPage() {
           >
           <div
             ref={boardScrollRef}
-            className="scrollbar-thin grid h-full gap-3 overflow-x-auto p-3 sm:p-4"
+            className="scrollbar-thin grid h-full grid-rows-1 gap-3 overflow-x-auto p-3 sm:p-4"
             style={{ gridTemplateColumns: `repeat(${board.columns.length}, minmax(180px, 1fr))` }}
           >
             {board.columns.map((column) => (
