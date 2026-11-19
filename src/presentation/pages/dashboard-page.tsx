@@ -29,7 +29,7 @@ import { useWorkspaceData } from '@/app/workspace-data-provider'
 import { useWorkspaceTasks } from '@/presentation/hooks/use-data'
 import { buildDashboard } from '@/domain/services/analytics-service'
 import { isTaskCompleted } from '@/domain/services/task-service'
-import { mergeBoardColumns, type Task } from '@/domain/entities/kanban'
+import { DEFAULT_BOARD_COLUMNS, isReviewColumn, mergeBoardColumns, type BoardColumn, type Task } from '@/domain/entities/kanban'
 import { PRIORITY_META } from '@/domain/entities/identity'
 import { addDays, dayKey, formatRelative, startOfDay } from '@/lib/date'
 import { isRecentlyActive } from '@/lib/presence'
@@ -60,9 +60,16 @@ const overviewDate = new Intl.DateTimeFormat('es-ES', {
   month: 'long',
   year: 'numeric',
 })
-const overviewLinkClass = 'font-medium text-primary underline underline-offset-4 hover:decoration-2'
+const overviewLinkClass = 'font-medium underline underline-offset-4 hover:decoration-2'
+const defaultReviewColor = DEFAULT_BOARD_COLUMNS.find(isReviewColumn)?.color ?? '#f59e0b'
 
-function DashboardOverview({ tasksByBoard }: { tasksByBoard: Record<string, Task[]> }) {
+function DashboardOverview({
+  tasksByBoard,
+  columns,
+}: {
+  tasksByBoard: Record<string, Task[]>
+  columns: BoardColumn[]
+}) {
   const { workspace, uid, boards, channels } = useWorkspaceData()
   const { byTarget } = useNotifications()
   const [today, setToday] = useState(() => new Date())
@@ -86,7 +93,7 @@ function DashboardOverview({ tasksByBoard }: { tasksByBoard: Record<string, Task
         <time dateTime={dayKey(today)}>{overviewDate.format(today)}</time>
       </h1>
       {assignedBoards.length > 0 && (
-        <p className="break-words text-sm text-muted-foreground">
+        <p className="break-words text-sm" style={{ color: columns.find(isReviewColumn)?.color ?? defaultReviewColor }}>
           Tienes tareas asignadas en{' '}
           {assignedBoards.map((board, index) => (
             <span key={board.id}>
@@ -105,7 +112,7 @@ function DashboardOverview({ tasksByBoard }: { tasksByBoard: Record<string, Task
           {unreadChannels.map((channel, index) => (
             <span key={channel.id}>
               {index > 0 && ', '}
-              <Link className={overviewLinkClass} to={`/w/${workspace.id}/c/${channel.id}`}>
+              <Link className={`text-primary ${overviewLinkClass}`} to={`/w/${workspace.id}/c/${channel.id}`}>
                 #{channel.name}
               </Link>
             </span>
@@ -214,7 +221,7 @@ export function DashboardPage() {
     return (
       <div className="scrollbar-thin h-full overflow-y-auto p-5 sm:p-8">
         <div className="mx-auto max-w-3xl">
-          <DashboardOverview tasksByBoard={tasksByBoard} />
+          <DashboardOverview tasksByBoard={tasksByBoard} columns={activeColumns} />
           <EmptyState
             className="mt-8"
             icon={KanbanSquare}
@@ -239,7 +246,7 @@ export function DashboardPage() {
     <div className="scrollbar-thin h-full overflow-y-auto">
       <div className="mx-auto max-w-6xl space-y-6 p-5 pb-12 sm:p-8">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <DashboardOverview tasksByBoard={tasksByBoard} />
+          <DashboardOverview tasksByBoard={tasksByBoard} columns={activeColumns} />
           <div className="flex flex-wrap items-center gap-2">
             <Select value={boardId} onValueChange={setBoardId}>
               <SelectTrigger className="h-9 w-[240px] bg-card/70 text-xs">
