@@ -85,6 +85,14 @@ async function checkThemes(workspaceId) {
 
     await page.goto(`${boardUrl}?task=t-1`)
     await verifyDetail(page)
+    if (id === 'liquid-glass-light') {
+      await detail.locator('.task-title-input').waitFor()
+      await page.locator('[data-slot="sheet-content"][data-glass-refraction="live"]').waitFor()
+      await page.keyboard.press('Escape')
+      await detail.waitFor({ state: 'hidden' })
+      await verifyColumnGlass()
+      await verifyLiveRefraction()
+    }
     console.log('[themes]', id)
   }
 
@@ -100,7 +108,11 @@ async function checkThemes(workspaceId) {
     await phone.goto(`${BASE}/w/${phoneWorkspace}/boards/b-producto`)
     await phone.locator('[data-task-id="t-1"]').tap()
     await verifyDetail(phone)
-    assert.equal(await phone.locator('.glass-backdrop').getAttribute('data-renderer'), 'css')
+    if (webkitBrowser) {
+      assert.equal(await phone.locator('[data-slot="sheet-content"][data-glass-refraction]').count(), 0)
+    } else {
+      await phone.locator('[data-slot="sheet-content"][data-glass-refraction="live"]').waitFor()
+    }
     const surface = phone.getByRole('dialog', { name: 'Detalle de la tarea' })
     assert.match(await surface.evaluate((element) => {
       const style = getComputedStyle(element)
@@ -124,6 +136,76 @@ async function checkThemes(workspaceId) {
   }
   console.log('[themes] tareas accesibles con ratón, teclado, enlace y toque')
 
+}
+
+async function verifyColumnGlass() {
+  const header = page.locator('[data-column-id="todo"] [data-glass-chrome="column"]')
+  await header.locator('button').first().waitFor()
+  await header.hover()
+  await page.waitForFunction(() => {
+    const element = document.querySelector('[data-column-id="todo"] [data-glass-chrome="column"]')
+    return Boolean(element?.style.getPropertyValue('--glass-light-x'))
+  })
+  const geometry = await header.evaluate((element) => {
+    const list = element.parentElement
+    const card = list.querySelector('[data-task-id="t-1"]')
+    list.style.maxHeight = '160px'
+    list.scrollTop = 65
+    const lens = element.getBoundingClientRect()
+    const task = card.getBoundingClientRect()
+    list.scrollTop = 0
+    list.style.removeProperty('max-height')
+    return { overlaps: task.top < lens.bottom && task.bottom > lens.top, sticky: getComputedStyle(element).position }
+  })
+  assert.equal(geometry.sticky, 'sticky')
+  assert.ok(geometry.overlaps, 'La tarjeta debe desplazarse por debajo de la cabecera')
+}
+
+async function verifyLiveRefraction() {
+  await page.evaluate(() => {
+    const stage = document.createElement('div')
+    stage.id = 'glass-optics-test'
+    stage.style.cssText = 'position:fixed;top:10px;left:10px;width:256px;height:144px;z-index:10000'
+    stage.style.background = 'repeating-linear-gradient(90deg, #00f 0 7px, #ff0 7px 14px)'
+    const lens = document.createElement('div')
+    lens.dataset.glassSurface = 'overlay'
+    lens.style.cssText = 'position:absolute;inset:20px 38px;border-radius:24px;--glass-blur:0px'
+    lens.style.setProperty('background', 'transparent', 'important')
+    lens.style.setProperty('box-shadow', 'none', 'important')
+    stage.append(lens)
+    document.body.append(stage)
+  })
+  const stage = page.locator('#glass-optics-test')
+  const lens = stage.locator('[data-glass-refraction="live"]')
+  try {
+    await lens.waitFor()
+    const refracted = (await stage.screenshot()).toString('base64')
+    await lens.evaluate((element) => element.style.setProperty('backdrop-filter', 'none', 'important'))
+    const control = (await stage.screenshot()).toString('base64')
+    const displacedPixels = await page.evaluate(async ([before, after]) => {
+      async function pixels(data) {
+        const image = new Image()
+        image.src = `data:image/png;base64,${data}`
+        await image.decode()
+        const canvas = document.createElement('canvas')
+        canvas.width = image.width
+        canvas.height = image.height
+        const context = canvas.getContext('2d')
+        context.drawImage(image, 0, 0)
+        return context.getImageData(43, 47, 18, 50).data
+      }
+      const [refracted, control] = await Promise.all([pixels(before), pixels(after)])
+      let changed = 0
+      for (let i = 0; i < refracted.length; i += 4) {
+        if (Math.abs(refracted[i] - control[i]) > 100) changed++
+      }
+      return changed
+    }, [refracted, control])
+    assert.ok(displacedPixels > 200, `Falta desplazamiento en el borde: ${displacedPixels} píxeles`)
+    console.log('[glass] el filtro desplaza el contenido real detrás del borde')
+  } finally {
+    await stage.evaluate((element) => element.remove())
+  }
 }
 
 async function checkInteractions(workspaceId) {

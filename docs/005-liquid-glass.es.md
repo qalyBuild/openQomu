@@ -2,9 +2,9 @@
 
 ## Concepto
 
-openQomu ofrece un material web inspirado en las [guías de materiales de Apple](https://developer.apple.com/design/human-interface-guidelines/materials). Aplica transparencia y refracción a la navegación y a los controles flotantes para mantener el contenido en primer plano. El material nativo de Apple se ofrece mediante sus [frameworks de plataforma](https://developer.apple.com/documentation/technologyoverviews/liquid-glass).
+El tema web de openQomu sigue la jerarquía descrita por [Apple en su introducción a Liquid Glass](https://developer.apple.com/documentation/technologyoverviews/liquid-glass) y en las [guías de materiales](https://developer.apple.com/design/human-interface-guidelines/materials). El vidrio identifica navegación y controles por encima del contenido. En el tablero las tarjetas se desplazan por debajo de las cabeceras de columna, y el detalle deja ver el tablero debajo.
 
-El efecto web combina un fondo, tinte y desenfoque CSS, un borde especular y una lente WebGL opcional sobre el fondo. Los elementos decorativos quedan fuera de la interacción. El componente conserva su posición, orden de apilado y gestión de foco al cambiar de tema.
+Un mapa de desplazamiento generado para el tamaño de cada superficie aplica refracción al contenido que Chromium compone en ese instante. El borde curvo desvía más la imagen que el centro. Una capa de reflejos sigue el puntero o el toque y los botones se comprimen durante la pulsación. El filtrado preserva el foco y las áreas de interacción.
 
 ## Opciones del tema
 
@@ -34,28 +34,20 @@ El efecto web combina un fondo, tinte y desenfoque CSS, un borde especular y una
 ```
 
 - `material`: `clear`, `regular`, `frosted`.
-- `renderer`: `auto`, `css`, `webgl`.
-- `quality`: `auto`, `high`, `medium`, `low`.
-- Multiplicadores 0–2. `grid` y `caustics` 0–1. Ángulos 0–360.
-- `glass` solo es válido si `effects` incluye `glass`.
+- `renderer: "auto"` aplica refracción del contenido en Chromium si `svg` está activo y `lensing` es mayor que cero. `css` usa desenfoque, tinte y reflejos. `webgl` conserva la lente de fondo decorativo para temas que la solicitan explícitamente.
+- `quality` limita la resolución del mapa a 256, 512 o 768 píxeles en su lado mayor. Se crean filtros para un máximo de 24 superficies, con prioridad para los paneles flotantes.
+- `grid` y `caustics` se aplican en el fondo del modo WebGL. `tintLight` y `lightSpread` se aceptan en temas exportados anteriormente.
+- `glass` requiere que `effects` incluya `glass`.
 
-## Superficies
+## Superficies y plataformas
 
-- `chrome`: navegación, sidebar y topbar.
-- `overlay`: diálogos, sheets, menús, popovers, select, command y tooltips.
-- Las tarjetas, campos y el resto del contenido usan los colores del tema. La lente mide hasta 32 superficies visibles y prioriza los overlays.
-
-## Activación
-
-- Escritorio: CSS con lente WebGL si hay soporte y el renderer lo permite.
-- Safari móvil y Android (APK de Capacitor): tinte, desenfoque y borde CSS. La navegación mantiene el material con una intensidad adaptada al tamaño de pantalla.
-- Si falta soporte para desenfoque, la superficie usa un fondo sólido. Si se pierde WebGL o el tiempo medio de fotograma supera el presupuesto, se mantiene el material CSS.
-- La reducción de transparencia y los colores forzados usan superficies opacas. Con movimiento reducido se elimina la animación continua.
+- `chrome` cubre la navegación, las herramientas del tablero y las cabeceras de columna. `overlay` cubre diálogos, paneles, menús, popovers y selectores. Las tarjetas y su texto usan los colores del tema.
+- La refracción funciona en Chromium de escritorio y en WebView de Android basado en Chromium compatible. Safari y Firefox usan tinte, reflejos y desenfoque CSS. Si falta el desenfoque, usan un fondo sólido.
+- La reducción de transparencia y los colores forzados dejan las superficies opacas. Con movimiento reducido se conserva el material estático y se desactivan el seguimiento de reflejos y la compresión de los botones.
 
 ## Criterios de aceptación
 
-1. En temas predeterminados, personalizados y de vidrio, un clic, toque, Enter o un enlace directo abre el detalle de la tarea. El panel queda dentro de la ventana y el contenido se puede editar.
-2. Escape o Cerrar devuelven el foco a la tarjeta que abrió el detalle. Espacio conserva el arrastre con teclado.
-3. En claro y oscuro, el material distingue navegación y contenido. La lente sigue el desplazamiento y la apertura de overlays.
-4. Validar texto y controles con contraste AA, sin lente WebGL, en Safari móvil y en el APK de la versión distribuida. Probar los modos de accesibilidad y el cambio a un tema sin vidrio.
-5. Ejecutar `npm run interactions -- --themes` con un servidor en modo demo, además de lint, tipos, tests y build.
+1. Al desplazar una columna, las tarjetas pasan debajo de su cabecera. Con refracción activa, una línea de contraste cambia de posición cerca del borde. La prueba compara píxeles con el filtro activado y desactivado.
+2. Un clic, toque, Enter o un enlace directo abre el detalle. Escape o Cerrar devuelven el foco a la tarjeta. Espacio conserva el arrastre con teclado.
+3. Navegación, cabeceras, panel lateral y controles son legibles en temas claro y oscuro. Verificar el modo CSS de Safari, la reducción de transparencia y el cambio a un tema sin vidrio.
+4. Ejecutar `npm run interactions -- --themes` con un servidor en modo demo, además de lint, tipos, tests y build.

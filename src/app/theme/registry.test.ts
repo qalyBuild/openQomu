@@ -38,8 +38,11 @@ describe('registro de temas', () => {
       'solarized-dark',
     ])
     expect(findTheme(DEFAULT_THEME_ID)?.name).toBe('openQomu Oscuro')
-    expect(findTheme('liquid-glass-dark')?.options.glass?.material).toBe('regular')
-    expect(findTheme('liquid-glass-dark')?.options.glass?.grid).toBe(0.22)
+    for (const id of ['liquid-glass-light', 'liquid-glass-dark']) {
+      expect(findTheme(id)?.options.glass).toMatchObject({
+        material: 'clear', renderer: 'auto', svg: true, lensing: 1.15,
+      })
+    }
   })
 
   it('instala, lista y elimina temas validados', () => {
