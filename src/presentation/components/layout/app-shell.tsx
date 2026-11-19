@@ -130,7 +130,10 @@ export function AppShell({ workspace, children }: { workspace: Workspace; childr
   }, [boards, channels, navigate, pages, workspaceId])
 
   return (
-    <div className="safe-area-top safe-area-bottom flex h-svh overflow-hidden bg-background">
+    <div
+      data-slot="app-shell"
+      className="safe-area-top safe-area-bottom flex h-svh overflow-hidden bg-background"
+    >
       <aside
         id="desktop-sidebar"
         className="relative hidden shrink-0 border-e border-border/60 lg:block"
