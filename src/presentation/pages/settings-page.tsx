@@ -156,7 +156,10 @@ export function SettingsPage() {
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid h-auto! w-full grid-cols-3 gap-1 sm:flex sm:w-fit sm:flex-wrap">
+          <TabsList
+            data-glass-surface="chrome"
+            className="grid h-auto! w-full grid-cols-3 gap-1 sm:flex sm:w-fit sm:flex-wrap"
+          >
             <TabsTrigger value="general" className="flex-none gap-1.5 text-xs">
               <Settings className="size-3.5" /> General
             </TabsTrigger>
