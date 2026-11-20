@@ -16,6 +16,11 @@ html[data-effects~='glass'] {
   --glass-caustics: 0.15;
 }
 
+html[data-theme='liquid-glass-light'] {
+  --glass-min-edge: 58%;
+  --glass-light-rim-shade: rgb(67 97 136 / 0.28);
+}
+
 html[data-effects~='glass'] body {
   background-color: var(--background);
 }
@@ -130,14 +135,15 @@ html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surfa
   --glass-softness: max(8px, var(--glass-blur));
   --glass-body: clamp(48%, calc(var(--glass-surface-alpha) * 100% + 16%), 90%);
   --glass-edge: max(20%, calc(var(--glass-body) - 27%));
+  --glass-visible-edge: max(var(--glass-min-edge, 0%), var(--glass-edge));
   --glass-rim-lit: rgb(255 255 255 / 0.72);
-  --glass-rim-shade: rgb(7 15 26 / 0.48);
+  --glass-rim-shade: var(--glass-light-rim-shade, rgb(7 15 26 / 0.48));
   border-color: transparent !important;
   background:
     linear-gradient(160deg,
-      color-mix(in srgb, var(--glass-tint) var(--glass-edge), transparent),
+      color-mix(in srgb, var(--glass-tint) var(--glass-visible-edge), transparent),
       color-mix(in srgb, var(--glass-tint) var(--glass-body), transparent) 45% 72%,
-      color-mix(in srgb, var(--glass-tint) var(--glass-edge), transparent)) !important;
+      color-mix(in srgb, var(--glass-tint) var(--glass-visible-edge), transparent)) !important;
   -webkit-backdrop-filter: blur(var(--glass-softness)) saturate(var(--glass-saturation));
   backdrop-filter: blur(var(--glass-softness)) saturate(var(--glass-saturation));
   box-shadow:
@@ -165,6 +171,22 @@ html[data-effects~='glass'].dark :where([data-slot='app-shell']) [data-glass-sur
 
 html[data-effects~='glass'] [data-glass-chat] {
   background: transparent;
+}
+
+html[data-effects~='glass'] [data-chat-bubble] {
+  color: var(--card-foreground);
+  background-color: var(--card);
+  outline: 1px solid var(--border);
+  outline-offset: -1px;
+}
+
+html[data-effects~='glass'] [data-chat-bubble='sent'] {
+  background-color: color-mix(in oklab, var(--card), var(--primary) 10%);
+}
+
+html[data-effects~='glass'] [data-chat-bubble] a:hover {
+  color: var(--primary);
+  text-decoration-thickness: 2px;
 }
 
 html[data-effects~='glass'] [data-glass-chrome='composer'] {

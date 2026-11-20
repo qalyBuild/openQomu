@@ -341,6 +341,7 @@ export function MessageItem({
 
           {message.body && (
             <p
+              data-chat-bubble={mine ? 'sent' : 'received'}
               className={cn(
                 'whitespace-pre-wrap wrap-anywhere rounded-2xl px-3 py-2 text-[0.875rem] leading-relaxed',
                 mine ? 'bg-primary/10 text-foreground' : 'bg-muted/50 text-foreground/90',
