@@ -63,7 +63,7 @@ const overviewDate = new Intl.DateTimeFormat('es-ES', {
 })
 const overviewLinkClass = 'font-medium underline underline-offset-4 hover:decoration-2'
 const defaultReviewColor = DEFAULT_BOARD_COLUMNS.find(isReviewColumn)?.color ?? '#f59e0b'
-const lightAssignedBoardColor = '#15566a'
+const lightAssignedBoardColor = '#a53500'
 
 function DashboardOverview({ columns }: { columns: BoardColumn[] }) {
   const { workspace, boards, channels } = useWorkspaceData()
