@@ -31,13 +31,13 @@ html[data-effects~='glass'] [data-slot='app-shell'] {
 }
 
 html[data-effects~='glass']:not([data-glass-renderer='webgl']) [data-slot='app-shell'] {
-  --glass-wallpaper: url('./assets/glass-wallpaper-light.webp');
+  --glass-wallpaper: url('../../themes/official/liquid-glass/assets/glass-wallpaper-light.webp');
   --glass-wallpaper-wash: linear-gradient(140deg, rgb(247 252 252 / 0.48), rgb(241 249 252 / 0.43));
-  background: var(--glass-wallpaper-wash), var(--glass-wallpaper) center / cover no-repeat !important;
+  background: var(--glass-wallpaper-wash), var(--theme-wallpaper, var(--glass-wallpaper)) center / cover no-repeat !important;
 }
 
 html[data-effects~='glass'].dark [data-slot='app-shell'] {
-  --glass-wallpaper: url('./assets/glass-wallpaper.webp');
+  --glass-wallpaper: url('../../themes/official/liquid-glass/assets/glass-wallpaper.webp');
   --glass-wallpaper-wash: linear-gradient(125deg, rgb(7 12 23 / 0.46), rgb(7 12 23 / 0.04));
 }
 

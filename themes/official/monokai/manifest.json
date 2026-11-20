@@ -1,0 +1,15 @@
+{
+  "formatVersion": 1,
+  "id": "monokai",
+  "version": 1,
+  "name": "Monokai",
+  "author": "Qomu",
+  "license": "AGPL-3.0",
+  "variants": [
+    {
+      "id": "monokai",
+      "scheme": "dark",
+      "file": "variants/monokai.json"
+    }
+  ]
+}

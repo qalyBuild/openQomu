@@ -1,0 +1,60 @@
+{
+  "id": "liquid-glass-dark",
+  "name": "Liquid Glass Oscuro",
+  "scheme": "dark",
+  "version": 1,
+  "author": "Qomu",
+  "license": "AGPL-3.0",
+  "description": "Vidrio oscuro con refracción del contenido en movimiento.",
+  "tokens": {
+    "background": "oklch(0.18 0.02 265)",
+    "foreground": "oklch(0.96 0.01 260)",
+    "card": "oklch(0.26 0.03 265)",
+    "card-foreground": "oklch(0.96 0.01 260)",
+    "popover": "oklch(0.24 0.03 265 / 90%)",
+    "popover-foreground": "oklch(0.96 0.01 260)",
+    "primary": "oklch(0.72 0.14 250)",
+    "primary-foreground": "oklch(0.15 0.02 260)",
+    "secondary": "oklch(0.3 0.03 265 / 70%)",
+    "secondary-foreground": "oklch(0.94 0.01 260)",
+    "muted": "oklch(0.28 0.025 265)",
+    "muted-foreground": "oklch(0.76 0.02 260)",
+    "accent": "oklch(0.34 0.05 255)",
+    "accent-foreground": "oklch(0.93 0.03 250)",
+    "border": "oklch(1 0 0 / 14%)",
+    "input": "oklch(1 0 0 / 18%)",
+    "ring": "oklch(0.72 0.14 250 / 60%)",
+    "chart-1": "oklch(0.72 0.14 250)",
+    "chart-2": "oklch(0.74 0.1 190)",
+    "chart-3": "oklch(0.8 0.12 80)",
+    "chart-4": "oklch(0.7 0.17 5)",
+    "chart-5": "oklch(0.7 0.15 300)",
+    "radius": "1rem",
+    "sidebar": "oklch(0.22 0.025 265 / 60%)",
+    "sidebar-foreground": "oklch(0.92 0.01 260)",
+    "sidebar-primary": "oklch(0.72 0.14 250)",
+    "sidebar-primary-foreground": "oklch(0.15 0.02 260)",
+    "sidebar-accent": "oklch(0.3 0.04 260 / 70%)",
+    "sidebar-accent-foreground": "oklch(0.93 0.03 250)",
+    "sidebar-border": "oklch(1 0 0 / 10%)",
+    "sidebar-ring": "oklch(0.72 0.14 250 / 50%)",
+    "brand": "oklch(0.72 0.14 250)",
+    "brand-2": "oklch(0.7 0.16 320)",
+    "surface-glow": "oklch(0.72 0.14 250 / 0.22)",
+    "overlay": "oklch(0 0 0 / 0.3)"
+  },
+  "options": {
+    "effects": [
+      "glass"
+    ],
+    "glass": {
+      "material": "clear",
+      "blur": 12,
+      "opacity": 0.44,
+      "rim": 1,
+      "lensing": 1.15,
+      "brightness": 1,
+      "svg": true
+    }
+  }
+}

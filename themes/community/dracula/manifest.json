@@ -1,0 +1,15 @@
+{
+  "formatVersion": 1,
+  "id": "dracula",
+  "version": 1,
+  "name": "Dracula",
+  "author": "Comunidad openQomu",
+  "license": "CC0-1.0",
+  "variants": [
+    {
+      "id": "dracula",
+      "scheme": "dark",
+      "file": "variants/dracula.json"
+    }
+  ]
+}

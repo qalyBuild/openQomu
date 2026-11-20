@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/theme-packages.mjs build",
     "typecheck": "tsc -b",
     "lint": "oxlint",
     "preview": "vite preview",
@@ -32,7 +32,9 @@
     "deploy": "npm run build && firebase deploy --only hosting,firestore",
     "setup": "node scripts/setup.mjs",
     "check:private": "node scripts/check-no-private-values.mjs",
-    "check:docs": "node scripts/check-doc-pairs.mjs"
+    "check:docs": "node scripts/check-doc-pairs.mjs",
+    "themes:check": "node scripts/theme-packages.mjs check",
+    "themes:pack": "node scripts/theme-packages.mjs pack"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",
@@ -92,6 +94,7 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "@vitest/coverage-v8": "^5.1.0",
+    "fake-indexeddb": "^6.2.8",
     "firebase-tools": "^15.36.0",
     "jsdom": "^31.0.0",
     "oxlint": "^1.90.0",

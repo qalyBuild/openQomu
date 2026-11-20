@@ -5,6 +5,25 @@ export const THEME_CACHE_KEY = 'openqomu.theme.cache'
 const EFFECT_CLASSES = THEME_EFFECTS.map((effect) => `theme-${effect}`)
 let appliedTokens: string[] = []
 let appliedGlassTokens: string[] = []
+let activeImage: { blob: Blob; url: string } | undefined
+
+function applyWallpaper(root: HTMLElement, wallpaper?: Theme['wallpaper']) {
+  if (activeImage && wallpaper !== activeImage.blob) {
+    URL.revokeObjectURL(activeImage.url)
+    activeImage = undefined
+  }
+  if (wallpaper instanceof Blob && !activeImage && typeof URL.createObjectURL === 'function') {
+    activeImage = { blob: wallpaper, url: URL.createObjectURL(wallpaper) }
+  }
+  const url = typeof wallpaper === 'string' ? wallpaper : activeImage?.url
+  if (url) {
+    root.style.setProperty('--theme-wallpaper', `url(${JSON.stringify(url)})`)
+    root.dataset.themeWallpaper = ''
+  } else {
+    root.style.removeProperty('--theme-wallpaper')
+    delete root.dataset.themeWallpaper
+  }
+}
 
 export interface ThemeCache {
   id: string
@@ -50,6 +69,7 @@ export function clearTheme() {
   root.classList.remove('dark')
   root.removeAttribute('data-theme')
   root.removeAttribute('data-font')
+  applyWallpaper(root)
   root.removeAttribute('data-effects')
   root.removeAttribute('data-glass-material')
   root.removeAttribute('data-glass-renderer')
@@ -72,6 +92,7 @@ export function applyTheme(theme: Theme) {
   root.classList.toggle('dark', theme.scheme === 'dark')
   root.style.colorScheme = theme.scheme
   root.dataset.theme = theme.id
+  applyWallpaper(root, theme.wallpaper)
   root.dataset.font = theme.options.font
   root.dataset.effects = theme.options.effects.join(' ')
 

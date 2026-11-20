@@ -1,0 +1,15 @@
+{
+  "formatVersion": 1,
+  "id": "nord",
+  "version": 1,
+  "name": "Nord",
+  "author": "Comunidad openQomu",
+  "license": "CC0-1.0",
+  "variants": [
+    {
+      "id": "nord",
+      "scheme": "dark",
+      "file": "variants/nord.json"
+    }
+  ]
+}
