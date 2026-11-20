@@ -17,8 +17,7 @@ html[data-effects~='glass'] {
 }
 
 html[data-theme='liquid-glass-light'] {
-  --glass-min-edge: 58%;
-  --glass-light-rim-shade: rgb(67 97 136 / 0.28);
+  --glass-light-rim-shade: rgb(58 108 159 / 0.4);
 }
 
 html[data-effects~='glass'] body {
@@ -137,15 +136,14 @@ html[data-effects~='glass'] :is([data-glass-surface='chrome'], [data-glass-surfa
   --glass-softness: max(8px, var(--glass-blur));
   --glass-body: clamp(48%, calc(var(--glass-surface-alpha) * 100% + 16%), 90%);
   --glass-edge: max(20%, calc(var(--glass-body) - 27%));
-  --glass-visible-edge: max(var(--glass-min-edge, 0%), var(--glass-edge));
   --glass-rim-lit: rgb(255 255 255 / 0.72);
   --glass-rim-shade: var(--glass-light-rim-shade, rgb(7 15 26 / 0.48));
   border-color: transparent !important;
   background:
     linear-gradient(160deg,
-      color-mix(in srgb, var(--glass-tint) var(--glass-visible-edge), transparent),
+      color-mix(in srgb, var(--glass-tint) var(--glass-edge), transparent),
       color-mix(in srgb, var(--glass-tint) var(--glass-body), transparent) 45% 72%,
-      color-mix(in srgb, var(--glass-tint) var(--glass-visible-edge), transparent)) !important;
+      color-mix(in srgb, var(--glass-tint) var(--glass-edge), transparent)) !important;
   -webkit-backdrop-filter: blur(var(--glass-softness)) saturate(var(--glass-saturation));
   backdrop-filter: blur(var(--glass-softness)) saturate(var(--glass-saturation));
   box-shadow:
@@ -166,7 +164,7 @@ html[data-effects~='glass'] :where([data-slot='app-shell']) [data-glass-surface=
   --glass-softness: 6px;
 }
 
-html[data-effects~='glass'].dark :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel'])) {
+html[data-effects~='glass']:is(.dark, [data-theme='liquid-glass-light']) :where([data-slot='app-shell']) [data-glass-surface='panel']:not(:where([data-glass-surface='panel'] [data-glass-surface='panel'])) {
   --glass-body: 58%;
   --glass-edge: 21%;
 }

@@ -80,7 +80,7 @@ const BUILTIN_INPUTS: ThemeInput[] = [
     },
     options: {
       effects: ['glass'],
-      glass: { material: 'clear', tint: '#f8fbff', blur: 12, opacity: 0.62, rim: 1, lensing: 1.15, brightness: 1, svg: true },
+      glass: { material: 'clear', tint: '#f8fbff', blur: 12, opacity: 0.44, rim: 1, lensing: 1.15, brightness: 1, svg: true },
     },
   },
   {
