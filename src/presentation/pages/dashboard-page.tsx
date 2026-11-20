@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useAuth } from '@/app/auth-provider'
+import { useTheme } from '@/app/theme-provider'
 import { useWorkspaceData } from '@/app/workspace-data-provider'
 import { useWorkspaceTasks } from '@/presentation/hooks/use-data'
 import { buildDashboard } from '@/domain/services/analytics-service'
@@ -62,9 +63,11 @@ const overviewDate = new Intl.DateTimeFormat('es-ES', {
 })
 const overviewLinkClass = 'font-medium underline underline-offset-4 hover:decoration-2'
 const defaultReviewColor = DEFAULT_BOARD_COLUMNS.find(isReviewColumn)?.color ?? '#f59e0b'
+const lightAssignedBoardColor = '#15566a'
 
 function DashboardOverview({ columns }: { columns: BoardColumn[] }) {
   const { workspace, boards, channels } = useWorkspaceData()
+  const { scheme } = useTheme()
   const { byTarget, items } = useNotifications()
   const [today, setToday] = useState(() => new Date())
 
@@ -80,7 +83,9 @@ function DashboardOverview({ columns }: { columns: BoardColumn[] }) {
       .map(({ targetId }) => targetId),
   )
   const assignedBoards = boards.filter((board) => relevantBoardIds.has(board.id))
-  const reviewColor = columns.find(isReviewColumn)?.color ?? defaultReviewColor
+  const assignedBoardColor = scheme === 'light'
+    ? lightAssignedBoardColor
+    : columns.find(isReviewColumn)?.color ?? defaultReviewColor
   const unreadChannels = channels.filter((channel) => byTarget[notificationKey('chat', channel.id)] > 0)
 
   return (
@@ -98,7 +103,11 @@ function DashboardOverview({ columns }: { columns: BoardColumn[] }) {
           {assignedBoards.map((board, index) => (
             <span key={board.id}>
               {index > 0 && ', '}
-              <Link className={overviewLinkClass} style={{ color: reviewColor }} to={`/w/${workspace.id}/boards/${board.id}`}>
+              <Link
+                className={overviewLinkClass}
+                style={{ color: assignedBoardColor }}
+                to={`/w/${workspace.id}/boards/${board.id}`}
+              >
                 {board.name}
               </Link>
             </span>
