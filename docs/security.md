@@ -18,6 +18,7 @@ The client is untrusted. Anyone can build a modified frontend against your Fireb
 - Local mode has no authentication and no multi-device sync: it is a single-browser workspace.
 - Firestore rules protect data, not availability. Use quotas and App Check if you expose an instance publicly.
 - Deleted messages remain readable by workspace members for one hour until `push-worker` purges them. Without the Worker they remain until you delete them manually.
+- Completed tasks remain in Firestore for 15 days until `push-worker` deletes them with their comments and attachments. Without the Worker they remain indefinitely.
 - An administrator can read the content of a workspace. Document this in your organization's policies.
 
 ## Secrets

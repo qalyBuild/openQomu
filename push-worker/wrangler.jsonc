@@ -10,6 +10,10 @@
     // Ajusta estos valores a tu despliegue antes de publicar el Worker.
     "FIREBASE_PROJECT_ID": "",
     "FCM_PROJECT_ID": "",
+    // Bucket de Storage para borrar adjuntos; si se deja vacío se deduce de la URL.
+    "FIREBASE_STORAGE_BUCKET": "",
+    // Backfill único de completedAt; déjalo en false salvo mantenimiento.
+    "TASK_BACKFILL_ENABLED": "false",
     // Orígenes permitidos, separados por comas.
     "PUSH_ALLOWED_ORIGINS": ""
   },

@@ -12,7 +12,8 @@ versioning follows Semantic Versioning.
 - Local mode with `localStorage` and `IndexedDB`, no backend required.
 - Bring-your-own Firebase configuration with Firestore rules and indexes.
 - Optional file Worker over any S3-compatible storage.
-- Optional push Worker with FCM delivery and one-hour purge of deleted messages.
+- Optional push Worker with FCM delivery, one-hour purge of deleted messages and
+  15-day purge of completed tasks.
 - Optional MCP Worker with a skill for AI clients.
 - Docker image, nginx and Caddy examples, static hosting guide.
 - Bilingual documentation (English and Spanish).
@@ -26,6 +27,8 @@ versioning follows Semantic Versioning.
 - Configuration externalized: no deployment-specific URLs, project IDs or
   buckets in the repository.
 - Deleted messages are visible for one hour, then removed permanently.
+- Tasks in a final column are deleted after 15 days, including comments and
+  attachments; dashboard completion metrics cover the last 15 days.
 
 ### Removed
 

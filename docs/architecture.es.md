@@ -51,7 +51,7 @@ Añadir un backend significa implementar los puertos; no hay que tocar dominio n
 | Dispositivo | `.../devices/{deviceId}` | Token FCM por instalación. |
 | Cola de push | `.../pushOutbox/{eventId}` | Cola que procesa el Worker de push. |
 
-El borrado de mensajes es lógico: `deletedAt` marca la lápida, la interfaz la muestra una hora y después `push-worker` borra el documento. Los archivos pasan por papelera antes del borrado definitivo.
+El borrado de mensajes es lógico: `deletedAt` marca la lápida, la interfaz la muestra una hora y después `push-worker` borra el documento. Los archivos pasan por papelera antes del borrado definitivo. Las tareas completadas conservan `completedAt`; a los 15 días `push-worker` borra la tarea, sus comentarios y sus adjuntos, y limpia las referencias desde dependientes. Por eso las métricas de finalización del dashboard describen el tablero actual y los últimos 15 días.
 
 ## Flujo de ejecución
 

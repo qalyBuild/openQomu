@@ -127,9 +127,9 @@ Alternatives without a Worker: `VITE_FILE_STORAGE=firestore` (small files, ≤70
 
 ## 6. Push Worker (optional)
 
-Sends FCM notifications and purges expired deleted messages. Without it the app works, but there are no push notifications and tombstones stay in Firestore.
+Sends FCM notifications, purges expired deleted messages and deletes completed tasks after 15 days. Without it the app works, but there are no push notifications, tombstones stay in Firestore and completed tasks are never purged.
 
-1. Create a service account with `roles/datastore.user` and `roles/firebasecloudmessaging.admin`.
+1. Create a service account with `roles/datastore.user`, `roles/firebasecloudmessaging.admin` and `roles/storage.objectAdmin` (only if you use Firebase Storage for attachments).
 2. Set secrets:
 
 ```bash
@@ -141,10 +141,10 @@ npx wrangler secret put FCM_PROJECT_ID
 npm run deploy
 ```
 
-3. Set `PUSH_ALLOWED_ORIGINS` in `wrangler.jsonc` and deploy.
+3. Set `PUSH_ALLOWED_ORIGINS` in `wrangler.jsonc` and deploy. If you use Firebase Storage, set `FIREBASE_STORAGE_BUCKET`; otherwise it is inferred from each file URL.
 4. In the app build: `VITE_PUSH_URL=https://<worker-host>/notify`.
 
-The Worker exposes `/health` and `/notify` and runs a one-minute cron that processes the outbox and deletes messages whose `deletedAt` is older than one hour.
+The Worker exposes `/health` and `/notify` and runs a one-minute cron that processes the outbox. Every 15 minutes it deletes messages whose `deletedAt` is older than one hour and purges tasks completed more than 15 days ago. The purge includes comments, attachments and dependency references, including tasks on paused or deprecated boards.
 
 ## 7. MCP Worker (optional)
 

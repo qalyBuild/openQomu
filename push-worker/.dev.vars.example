@@ -3,4 +3,8 @@
 FIREBASE_SERVICE_ACCOUNT=
 FIREBASE_PROJECT_ID=
 FCM_PROJECT_ID=
+# Opcional: bucket de Storage para borrar adjuntos; si falta se deduce de la URL.
+FIREBASE_STORAGE_BUCKET=
+# Backfill único de completedAt; actívalo solo durante mantenimiento.
+TASK_BACKFILL_ENABLED=false
 PUSH_ALLOWED_ORIGINS=http://localhost:5173,https://localhost

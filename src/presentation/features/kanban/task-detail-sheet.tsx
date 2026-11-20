@@ -47,6 +47,7 @@ import { PRIORITY_META, PRIORITY_VALUES } from '@/domain/entities/identity'
 import { isDependentsColumn, isReviewColumn } from '@/domain/entities/kanban'
 import { MAX_TASK_LABELS, validateTaskDependencies } from '@/domain/services/task-service'
 import { canDeleteTask } from '@/domain/services/permission-service'
+import { formatTaskDeletionNotice } from '@/domain/services/task-retention'
 import { formatBytes, isImageFile } from '@/domain/services/file-service'
 import { formatRelative } from '@/lib/date'
 import { useAuth, useContainer } from '@/app/auth-provider'
@@ -147,6 +148,7 @@ export function TaskDetailSheet({
   const canTransfer = canDelete || board.createdBy === uid
   const column = board.columns.find((item) => item.id === task?.columnId)
   const isDone = Boolean(task?.completedAt) || Boolean(column?.isDone)
+  const deletionNotice = task && isDone ? formatTaskDeletionNotice(task) : null
   const canRejectReview = Boolean(
     task &&
       column &&
@@ -456,6 +458,16 @@ export function TaskDetailSheet({
                 maxLength={160}
               />
             </div>
+
+            {deletionNotice && (
+              <p
+                role="note"
+                className="flex items-center gap-1.5 rounded-lg border border-dashed border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-[0.7rem] text-muted-foreground"
+              >
+                <CalendarDays className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                {deletionNotice}
+              </p>
+            )}
 
             <div className="grid gap-2.5 sm:grid-cols-2">
               <div className="space-y-1.5">

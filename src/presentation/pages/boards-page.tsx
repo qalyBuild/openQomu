@@ -120,7 +120,10 @@ export function BoardsPage() {
                           </div>
 
                           <div className="space-y-1.5">
-                            <div className="flex items-center justify-between text-[0.65rem] text-muted-foreground">
+                            <div
+                              className="flex items-center justify-between text-[0.65rem] text-muted-foreground"
+                              title="Solo cuenta las tareas que siguen en el tablero; las hechas se conservan 15 días."
+                            >
                               <span>{summary.completionRate}% completado</span>
                               <span>
                                 {summary.completed}/{summary.total}

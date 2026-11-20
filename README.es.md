@@ -125,7 +125,7 @@ tests/rules/          pruebas de reglas de Firestore
 Cada Worker es independiente y solo hace falta si usas su funcionalidad.
 
 - **files-worker**: firma URLs y guarda binarios en un bucket compatible con S3 (B2, R2, MinIO, Wasabi).
-- **push-worker**: envía notificaciones FCM y purga los mensajes eliminados con un cron de un minuto.
+- **push-worker**: envía notificaciones FCM, purga los mensajes eliminados y las tareas hechas con un cron de un minuto.
 - **mcp-worker**: expone el endpoint MCP y la skill que consumen los clientes de IA.
 
 Cada carpeta tiene su propio README con los pasos de despliegue y los secretos necesarios.
@@ -133,6 +133,12 @@ Cada carpeta tiene su propio README con los pasos de despliegue y los secretos n
 ## Mensajes eliminados
 
 Al eliminar un mensaje queda visible como marca durante una hora y después el documento se borra de forma permanente. La purga la ejecuta `push-worker`; sin él, la interfaz oculta los mensajes caducados pero el documento permanece en Firestore.
+
+## Tareas completadas
+
+Una tarea que entra en una columna final (`isDone: true`) se conserva 15 días y después se borra definitivamente junto con sus comentarios y adjuntos. El cron de `push-worker` ejecuta la purga y también limpia las referencias desde tareas dependientes. Sin él, las tareas completadas permanecen en Firestore.
+
+Las métricas de finalización del dashboard describen el tablero actual y los últimos 15 días; no son un archivo histórico. El gráfico de 14 días no se ve afectado.
 
 ## Seguridad
 

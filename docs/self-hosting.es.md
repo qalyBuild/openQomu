@@ -127,9 +127,9 @@ Alternativas sin Worker: `VITE_FILE_STORAGE=firestore` (archivos pequeños, ≤7
 
 ## 6. Worker de push (opcional)
 
-Envía notificaciones FCM y purga los mensajes eliminados caducados. Sin él la app funciona, pero no hay notificaciones y las lápidas permanecen en Firestore.
+Envía notificaciones FCM, purga los mensajes eliminados caducados y borra las tareas completadas a los 15 días. Sin él la app funciona, pero no hay notificaciones, las lápidas permanecen en Firestore y las tareas hechas nunca se purgan.
 
-1. Crea una cuenta de servicio con `roles/datastore.user` y `roles/firebasecloudmessaging.admin`.
+1. Crea una cuenta de servicio con `roles/datastore.user`, `roles/firebasecloudmessaging.admin` y `roles/storage.objectAdmin` (solo si usas Firebase Storage para adjuntos).
 2. Configura los secretos:
 
 ```bash
@@ -141,10 +141,10 @@ npx wrangler secret put FCM_PROJECT_ID
 npm run deploy
 ```
 
-3. Ajusta `PUSH_ALLOWED_ORIGINS` en `wrangler.jsonc` y vuelve a desplegar.
+3. Ajusta `PUSH_ALLOWED_ORIGINS` en `wrangler.jsonc` y vuelve a desplegar. Si usas Firebase Storage, define `FIREBASE_STORAGE_BUCKET`; si no, se deduce de la URL de cada archivo.
 4. En el build de la app: `VITE_PUSH_URL=https://<host-del-worker>/notify`.
 
-El Worker expone `/health` y `/notify` y ejecuta un cron de un minuto que procesa la cola y borra los mensajes cuyo `deletedAt` supera una hora.
+El Worker expone `/health` y `/notify` y ejecuta un cron de un minuto que procesa la cola. Cada 15 minutos borra los mensajes cuyo `deletedAt` supera una hora y purga las tareas completadas hace más de 15 días. La purga incluye comentarios, adjuntos y referencias de dependencias, también en tableros pausados o deprecados.
 
 ## 7. Worker MCP (opcional)
 
