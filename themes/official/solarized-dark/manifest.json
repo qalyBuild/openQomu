@@ -1,0 +1,15 @@
+{
+  "formatVersion": 1,
+  "id": "solarized-dark",
+  "version": 1,
+  "name": "Solarized Oscuro",
+  "author": "Qomu",
+  "license": "AGPL-3.0",
+  "variants": [
+    {
+      "id": "solarized-dark",
+      "scheme": "dark",
+      "file": "variants/solarized-dark.json"
+    }
+  ]
+}

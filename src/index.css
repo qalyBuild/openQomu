@@ -555,3 +555,13 @@
     font-size: 1.05rem !important;
   }
 }
+
+html[data-theme-wallpaper]:not([data-effects~='glass']) [data-slot='app-shell'] {
+  background: var(--theme-wallpaper) center / cover no-repeat, var(--background);
+}
+
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  html[data-theme-wallpaper]:not([data-effects~='glass']) [data-slot='app-shell'] {
+    background: var(--background);
+  }
+}

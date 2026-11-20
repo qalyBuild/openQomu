@@ -1,0 +1,61 @@
+{
+  "id": "liquid-glass-light",
+  "name": "Liquid Glass Claro",
+  "scheme": "light",
+  "version": 1,
+  "author": "Qomu",
+  "license": "AGPL-3.0",
+  "description": "Vidrio claro con refracción del contenido en movimiento.",
+  "tokens": {
+    "background": "oklch(0.965 0.012 245)",
+    "foreground": "oklch(0.24 0.03 255)",
+    "card": "oklch(0.99 0.006 245)",
+    "card-foreground": "oklch(0.24 0.03 255)",
+    "popover": "oklch(0.995 0.005 245)",
+    "popover-foreground": "oklch(0.24 0.03 255)",
+    "primary": "oklch(0.47 0.17 255)",
+    "primary-foreground": "oklch(0.99 0 0)",
+    "secondary": "oklch(0.93 0.02 250)",
+    "secondary-foreground": "oklch(0.3 0.04 255)",
+    "muted": "oklch(0.93 0.015 250)",
+    "muted-foreground": "oklch(0.43 0.04 255)",
+    "accent": "oklch(0.9 0.04 245)",
+    "accent-foreground": "oklch(0.4 0.12 255)",
+    "border": "oklch(0.73 0.035 250 / 75%)",
+    "input": "oklch(0.63 0.04 250)",
+    "ring": "oklch(0.47 0.17 255 / 80%)",
+    "chart-1": "oklch(0.6 0.18 255)",
+    "chart-2": "oklch(0.68 0.12 190)",
+    "chart-3": "oklch(0.76 0.13 80)",
+    "chart-4": "oklch(0.64 0.2 5)",
+    "chart-5": "oklch(0.65 0.16 300)",
+    "radius": "1rem",
+    "sidebar": "oklch(1 0 0 / 0.52)",
+    "sidebar-foreground": "oklch(0.3 0.03 255)",
+    "sidebar-primary": "oklch(0.47 0.17 255)",
+    "sidebar-primary-foreground": "oklch(0.99 0 0)",
+    "sidebar-accent": "oklch(0.9 0.04 245 / 70%)",
+    "sidebar-accent-foreground": "oklch(0.4 0.12 255)",
+    "sidebar-border": "oklch(0.8 0.03 250 / 60%)",
+    "sidebar-ring": "oklch(0.47 0.17 255 / 80%)",
+    "brand": "oklch(0.47 0.17 255)",
+    "brand-2": "oklch(0.66 0.18 300)",
+    "surface-glow": "oklch(0.58 0.19 255 / 0.18)",
+    "overlay": "oklch(0.15 0.03 255 / 0.18)"
+  },
+  "options": {
+    "effects": [
+      "glass"
+    ],
+    "glass": {
+      "material": "clear",
+      "tint": "#f8fbff",
+      "blur": 12,
+      "opacity": 0.44,
+      "rim": 1,
+      "lensing": 1.15,
+      "brightness": 1,
+      "svg": true
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "formatVersion": 1,
+  "id": "qomu",
+  "version": 1,
+  "name": "Qomu",
+  "author": "Qomu",
+  "license": "AGPL-3.0",
+  "variants": [
+    {
+      "id": "qomu-light",
+      "scheme": "light",
+      "file": "variants/qomu-light.json"
+    },
+    {
+      "id": "qomu-dark",
+      "scheme": "dark",
+      "file": "variants/qomu-dark.json"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "formatVersion": 1,
+  "id": "liquid-glass",
+  "version": 1,
+  "name": "Liquid Glass",
+  "author": "Qomu",
+  "license": "AGPL-3.0",
+  "variants": [
+    {
+      "id": "liquid-glass-light",
+      "scheme": "light",
+      "file": "variants/liquid-glass-light.json",
+      "wallpaper": "assets/glass-wallpaper-light.webp"
+    },
+    {
+      "id": "liquid-glass-dark",
+      "scheme": "dark",
+      "file": "variants/liquid-glass-dark.json",
+      "wallpaper": "assets/glass-wallpaper.webp"
+    }
+  ]
+}

@@ -36,6 +36,7 @@ export interface ThemeInput {
 export interface Theme extends Omit<ThemeInput, 'tokens' | 'options'> {
   tokens: ThemeTokens
   options: ThemeOptions
+  wallpaper?: Blob | string
 }
 
 export type ThemeToken = (typeof THEME_TOKENS)[number]
@@ -168,15 +169,17 @@ export const BASE_TOKENS: Record<ThemeScheme, ThemeTokens> = {
 
 export const DEFAULT_THEME_ID = 'qomu-dark'
 
-export function resolveTheme(input: ThemeInput): Theme {
+export function resolveTheme(input: ThemeInput, wallpaper?: Blob | string): Theme {
   const effects = input.options?.effects ?? []
   return {
     ...input,
+    ...(wallpaper ? { wallpaper } : {}),
     tokens: { ...BASE_TOKENS[input.scheme], ...input.tokens },
     options: {
       font: input.options?.font ?? 'geist',
       effects,
-      ...(input.options?.glass ? { glass: resolveGlass(input.options.glass, input.scheme) } : {}),
+      ...(input.options?.glass ? { glass: resolveGlass(wallpaper && input.options.glass.renderer === 'webgl'
+        ? { ...input.options.glass, renderer: 'auto' } : input.options.glass, input.scheme) } : {}),
     },
   }
 }

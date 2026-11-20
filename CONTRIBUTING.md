@@ -10,6 +10,12 @@ Thanks for your interest. This document explains how to propose changes, the con
 - For behaviour changes or new features, open an issue first. Explain the problem, the proposed solution and the alternatives you considered.
 - Security issues never go to the public tracker: see [SECURITY.md](SECURITY.md).
 
+## Contribute a theme
+
+Open **Temas → Contribuir con un tema** in openQomu. Select your `.qomutheme`, review its variants, and choose **Descargar y abrir GitHub**. Add the extracted `themes/community/<id>/` folder to your fork and open a PR. You can go straight to a PR for a theme.
+
+Read the [theme contribution guide](themes/README.en.md) for the manifest, starter files, validation, and review criteria. Packages under `themes/community/` are contributed under CC0-1.0, including their bundled wallpapers.
+
 ## Development
 
 ```bash
@@ -56,7 +62,7 @@ Every commit must be signed off:
 git commit -s -m "feat(chat): attach pasted images in the composer"
 ```
 
-The `Signed-off-by` line certifies the Developer Certificate of Origin 1.1 (https://developercertificate.org). By signing off you confirm you wrote the change or have the right to submit it, and you license it under AGPL-3.0-only.
+The `Signed-off-by` line certifies the Developer Certificate of Origin 1.1 (https://developercertificate.org). By signing off you confirm you wrote the change or have the right to submit it, and you submit it under the applicable project license. Code and documentation use AGPL-3.0-only. Community theme packages use CC0-1.0.
 
 ## Review
 

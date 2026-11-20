@@ -1,0 +1,13 @@
+{
+  "id": "qomu-dark",
+  "name": "Qomu Oscuro",
+  "scheme": "dark",
+  "version": 1,
+  "author": "Qomu",
+  "license": "AGPL-3.0",
+  "description": "El estilo oscuro original de Qomu.",
+  "tokens": {
+    "background": "oklch(0.135 0.012 288)",
+    "foreground": "oklch(0.965 0.006 290)"
+  }
+}

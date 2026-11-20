@@ -10,6 +10,12 @@ Gracias por tu interés. Este documento explica cómo proponer cambios, las conv
 - Para cambios de comportamiento o funcionalidades nuevas, abre antes una incidencia. Explica el problema, la solución propuesta y las alternativas que valoraste.
 - Los problemas de seguridad nunca van al gestor público: consulta [SECURITY.es.md](SECURITY.es.md).
 
+## Contribuir con un tema
+
+En openQomu, abre **Temas → Contribuir con un tema**. Selecciona tu `.qomutheme`, revisa las variantes y pulsa **Descargar y abrir GitHub**. Añade la carpeta extraída `themes/community/<id>/` a tu fork y abre un PR. Para un tema puedes abrir directamente el PR.
+
+Consulta la [guía de temas](themes/README.md) para ver el manifiesto, archivos de ejemplo y criterios de validación y revisión. Los paquetes en `themes/community/` se aportan bajo CC0-1.0, incluidos sus fondos.
+
 ## Desarrollo
 
 ```bash
@@ -56,7 +62,7 @@ Todos los commits deben ir firmados:
 git commit -s -m "feat(chat): adjuntar imágenes pegadas en el compositor"
 ```
 
-La línea `Signed-off-by` certifica el Developer Certificate of Origin 1.1 (https://developercertificate.org). Al firmar confirmas que escribiste el cambio o que tienes derecho a enviarlo, y lo licencias bajo AGPL-3.0-only.
+La línea `Signed-off-by` certifica el Developer Certificate of Origin 1.1 (https://developercertificate.org). Al firmar confirmas que escribiste el cambio o que tienes derecho a enviarlo, y lo aportas bajo la licencia aplicable. El código y la documentación usan AGPL-3.0-only. Los paquetes de la comunidad usan CC0-1.0.
 
 ## Revisión
 
