@@ -125,7 +125,7 @@ tests/rules/          Firestore rules tests
 Each Worker is independent and only needed if you use its feature.
 
 - **files-worker**: signs URLs and stores binaries in an S3-compatible bucket (B2, R2, MinIO, Wasabi).
-- **push-worker**: sends FCM notifications and purges deleted messages on a one-minute cron.
+- **push-worker**: sends FCM notifications, purges deleted messages and completed tasks on a one-minute cron.
 - **mcp-worker**: exposes the MCP endpoint and the skill used by AI clients.
 
 Each directory has its own README with deployment steps and required secrets.
@@ -133,6 +133,12 @@ Each directory has its own README with deployment steps and required secrets.
 ## Deleted messages
 
 Deleting a message keeps a visible tombstone for one hour, then the document is removed permanently. The purge runs in `push-worker`; without it, the interface hides expired messages but the document remains in Firestore.
+
+## Completed tasks
+
+A task that enters a final column (`isDone: true`) is kept for 15 days and then deleted permanently, together with its comments and attachments. The `push-worker` cron performs the purge and also removes references from dependent tasks. Without it, completed tasks remain in Firestore.
+
+Dashboard completion metrics describe the current board and the last 15 days; they are not an all-time archive. The 14-day trend is unaffected.
 
 ## Security
 

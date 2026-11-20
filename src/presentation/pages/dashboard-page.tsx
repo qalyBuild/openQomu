@@ -213,6 +213,7 @@ export function DashboardPage() {
       open: item.open,
       completed: item.completed,
     }))
+  const completedLast14Days = metrics.trend.reduce((total, point) => total + point.completed, 0)
 
   const pieData = metrics.byStatus.filter((status) => status.count > 0).map((status) => ({
     name: status.columnId,
@@ -295,9 +296,9 @@ export function DashboardPage() {
             loading={loading}
           />
           <StatCard
-            label="Completadas"
+            label="Completadas · 15 días"
             value={metrics.completed}
-            hint={`${metrics.completionRate}% de finalización`}
+            hint={`${metrics.completionRate}% de las tareas actuales`}
             icon={CheckCircle2}
             accent="var(--chart-2)"
             loading={loading}
@@ -328,7 +329,7 @@ export function DashboardPage() {
                 <p className="mt-0.5 text-xs text-muted-foreground">Creadas vs. completadas · últimos 14 días</p>
               </div>
               <Badge variant="outline" className="gap-1 border-emerald-500/25 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                <TrendingUp className="size-3" /> {metrics.completionRate}%
+                <TrendingUp className="size-3" /> {completedLast14Days} completadas
               </Badge>
             </CardHeader>
             <CardContent className="px-3 pb-3 pt-2">
@@ -370,7 +371,7 @@ export function DashboardPage() {
             <CardHeader className="px-4 pb-0">
               <CardTitle className="text-sm font-semibold">Estado del tablero</CardTitle>
               <p className="text-xs text-muted-foreground">
-                {board?.name ?? 'Todos los tableros'}
+                {board?.name ?? 'Todos los tableros'} · las hechas se conservan 15 días
               </p>
             </CardHeader>
             <CardContent className="relative px-3 pb-3 pt-0">

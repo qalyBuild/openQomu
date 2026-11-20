@@ -276,6 +276,43 @@ export async function queryCollectionRange<T = Record<string, unknown>>(
     }))
 }
 
+/** Consulta de grupo de colecciones por pertenencia a un array. */
+export async function queryCollectionGroupArrayContains<T = Record<string, unknown>>(
+  env: Env,
+  collectionId: string,
+  fieldPath: string,
+  value: string,
+  limit = 50,
+): Promise<Array<StoredDocument<T> & { path: string }>> {
+  const response = await firestoreFetch(env, '/:runQuery', {
+    method: 'POST',
+    body: JSON.stringify({
+      parent: documentsBase(env),
+      structuredQuery: {
+        from: [{ collectionId, allDescendants: true }],
+        where: {
+          fieldFilter: {
+            field: { fieldPath },
+            op: 'ARRAY_CONTAINS',
+            value: encodeValue(value),
+          },
+        },
+        limit,
+      },
+    }),
+  })
+  await expectOk(response, 'collection group array query')
+  const rows = (await response.json()) as Array<{ document?: FirestoreDocument }>
+  return rows
+    .filter((row) => row.document)
+    .map((row) => ({
+      id: idFromName(row.document?.name),
+      data: decodeFields(row.document?.fields) as T,
+      updateTime: row.document?.updateTime,
+      path: pathFromName(env, row.document?.name),
+    }))
+}
+
 function pathFromName(env: Env, name: string | undefined): string {
   if (!name) return ''
   const prefix = `${documentsBase(env)}/`
@@ -317,4 +354,9 @@ export async function deleteDocument(env: Env, path: string): Promise<void> {
 /** Canjea el service account por un token con el scope de FCM. */
 export async function getMessagingAccessToken(env: Env): Promise<string> {
   return getAccessToken(env, 'https://www.googleapis.com/auth/firebase.messaging')
+}
+
+/** Canjea el service account por un token para borrar objetos de Storage. */
+export async function getStorageAccessToken(env: Env): Promise<string> {
+  return getAccessToken(env, 'https://www.googleapis.com/auth/devstorage.read_write')
 }

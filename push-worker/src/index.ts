@@ -3,6 +3,7 @@ import type { Env } from './env'
 import { FirebaseFcmSender } from './fcm'
 import { processEvent, processPending } from './processor'
 import { purgeDeletedMessages, purgeExpiredInvites } from './purge'
+import { backfillTaskCompletedAt, purgeCompletedTasks } from './task-purge'
 import { checkRateLimit } from './rate-limit'
 import { FirestoreStore } from './store'
 
@@ -103,6 +104,10 @@ export default {
         .then((counts) => console.log('[openqomu-push] cron', counts))
         .catch((error) => console.error('[openqomu-push] cron', error)),
     )
+
+    // Las purgas no necesitan frecuencia alta y cada consulta consume cuota.
+    if (new Date().getUTCMinutes() % 15 !== 0) return
+
     ctx.waitUntil(
       purgeDeletedMessages(env)
         .then((count) => console.log('[openqomu-push] purga mensajes', count))
@@ -112,6 +117,26 @@ export default {
       purgeExpiredInvites(env)
         .then((count) => console.log('[openqomu-push] purga invitaciones', count))
         .catch((error) => console.error('[openqomu-push] purga invitaciones', error)),
+    )
+    if (env.TASK_BACKFILL_ENABLED === 'true') {
+      ctx.waitUntil(
+        backfillTaskCompletedAt(env)
+          .then(({ updated, done }) => {
+            if (updated > 0 || done) {
+              console.log('[openqomu-push] backfill tareas completadas', { updated, done })
+            }
+          })
+          .catch((error) => console.error('[openqomu-push] backfill tareas completadas', error)),
+      )
+    }
+    ctx.waitUntil(
+      purgeCompletedTasks(env)
+        .then((counts) => {
+          if (counts.deleted > 0 || counts.failed > 0) {
+            console.log('[openqomu-push] purga tareas hechas', counts)
+          }
+        })
+        .catch((error) => console.error('[openqomu-push] purga tareas hechas', error)),
     )
   },
 }

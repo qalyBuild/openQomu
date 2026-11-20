@@ -238,6 +238,7 @@ npx -y mcp-remote {MCP_URL} \\
 - **Tareas relacionadas**: una tarea en \`Dependientes\` puede depender de varias. Pasa a \`Por hacer\` cuando todas estén hechas y no admite tareas completadas.
 - **Prioridad \`paused\`**: “En pausa”. No cuenta como tarea abierta en el dashboard ni genera avisos de vencimiento.
 - Al mover una tarea a una columna \`isDone\`, \`reviewerId\` se borra por diseño.
+- Las tareas en \`isDone\` se eliminan definitivamente a los 15 días, con sus comentarios y adjuntos. No cuentes con tareas hechas antiguas.
 - Comentarios y adjuntos se migran al mover una tarea entre tableros/espacios desde la UI.
 
 ## Reglas de oro

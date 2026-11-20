@@ -51,7 +51,7 @@ Adding a backend means implementing the ports; no domain or presentation code ch
 | Device | `.../devices/{deviceId}` | FCM token per installation. |
 | Push outbox | `.../pushOutbox/{eventId}` | Queue processed by the push Worker. |
 
-Deletion is soft for messages: `deletedAt` marks the tombstone, the interface shows it for one hour and `push-worker` deletes the document afterwards. Files have a trash state before permanent deletion.
+Deletion is soft for messages: `deletedAt` marks the tombstone, the interface shows it for one hour and `push-worker` deletes the document afterwards. Files have a trash state before permanent deletion. Completed tasks keep `completedAt`; after 15 days `push-worker` deletes the task, its comments and its attachments, and clears dependency references. Dashboard completion metrics therefore describe the current board and the last 15 days.
 
 ## Runtime flow
 

@@ -18,6 +18,7 @@ El cliente no es de confianza. Cualquiera puede compilar un frontend modificado 
 - El modo local no tiene autenticación ni sincronización entre dispositivos: es un espacio de un solo navegador.
 - Las reglas protegen los datos, no la disponibilidad. Usa cuotas y App Check si expones una instancia públicamente.
 - Los mensajes eliminados siguen siendo legibles por los miembros del espacio durante una hora, hasta que `push-worker` los purga. Sin ese Worker permanecen hasta que los borres manualmente.
+- Las tareas completadas permanecen en Firestore 15 días, hasta que `push-worker` las borra con sus comentarios y adjuntos. Sin ese Worker permanecen indefinidamente.
 - Un administrador puede leer el contenido de un espacio. Documéntalo en las políticas de tu organización.
 
 ## Secretos
