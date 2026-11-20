@@ -40,7 +40,7 @@ describe('registro de temas', () => {
     expect(findTheme(DEFAULT_THEME_ID)?.name).toBe('openQomu Oscuro')
     for (const id of ['liquid-glass-light', 'liquid-glass-dark']) {
       expect(findTheme(id)?.options.glass).toMatchObject({
-        material: 'clear', renderer: 'auto', svg: true, lensing: 1.15,
+        material: 'clear', renderer: 'auto', svg: true, lensing: 1.15, opacity: 0.44,
       })
     }
   })
