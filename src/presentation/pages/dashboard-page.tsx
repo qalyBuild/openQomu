@@ -63,7 +63,12 @@ const overviewDate = new Intl.DateTimeFormat('es-ES', {
 })
 const overviewLinkClass = 'font-medium underline underline-offset-4 hover:decoration-2'
 const defaultReviewColor = DEFAULT_BOARD_COLUMNS.find(isReviewColumn)?.color ?? '#f59e0b'
-const lightAssignedBoardColor = '#a53500'
+const lightAssignedBoardStyle = {
+  color: '#c64800',
+  backgroundColor: '#fffaf5',
+  borderRadius: '0.125rem',
+  textUnderlineOffset: '2px',
+}
 
 function DashboardOverview({ columns }: { columns: BoardColumn[] }) {
   const { workspace, boards, channels } = useWorkspaceData()
@@ -83,9 +88,9 @@ function DashboardOverview({ columns }: { columns: BoardColumn[] }) {
       .map(({ targetId }) => targetId),
   )
   const assignedBoards = boards.filter((board) => relevantBoardIds.has(board.id))
-  const assignedBoardColor = scheme === 'light'
-    ? lightAssignedBoardColor
-    : columns.find(isReviewColumn)?.color ?? defaultReviewColor
+  const assignedBoardStyle = scheme === 'light'
+    ? lightAssignedBoardStyle
+    : { color: columns.find(isReviewColumn)?.color ?? defaultReviewColor }
   const unreadChannels = channels.filter((channel) => byTarget[notificationKey('chat', channel.id)] > 0)
 
   return (
@@ -105,7 +110,7 @@ function DashboardOverview({ columns }: { columns: BoardColumn[] }) {
               {index > 0 && ', '}
               <Link
                 className={overviewLinkClass}
-                style={{ color: assignedBoardColor }}
+                style={assignedBoardStyle}
                 to={`/w/${workspace.id}/boards/${board.id}`}
               >
                 {board.name}
