@@ -28,7 +28,7 @@ import { useAuth } from '@/app/auth-provider'
 import { useTheme } from '@/app/theme-provider'
 import { useWorkspaceData } from '@/app/workspace-data-provider'
 import { useWorkspaceTasks } from '@/presentation/hooks/use-data'
-import { buildDashboard } from '@/domain/services/analytics-service'
+import { buildDashboard, dashboardTasks } from '@/domain/services/analytics-service'
 import { isTaskCompleted } from '@/domain/services/task-service'
 import { DEFAULT_BOARD_COLUMNS, isReviewColumn, mergeBoardColumns, type BoardColumn } from '@/domain/entities/kanban'
 import { PRIORITY_META } from '@/domain/entities/identity'
@@ -188,7 +188,10 @@ export function DashboardPage() {
     workspace.id,
     boardIds,
   )
-  const tasks = boardId === 'all' ? workspaceTasks : (tasksByBoard[boardId] ?? [])
+  const tasks = useMemo(
+    () => dashboardTasks(boardId === 'all' ? workspaceTasks : (tasksByBoard[boardId] ?? []), boards),
+    [boardId, workspaceTasks, tasksByBoard, boards],
+  )
   const activeColumns = useMemo(
     () => (boardId === 'all' ? mergeBoardColumns(boards) : (board?.columns ?? [])),
     [board, boardId, boards],
