@@ -12,6 +12,8 @@ openQomu is a self-hostable collaboration workspace: real-time chat, Kanban boar
 
 openQomu is an independent open source project. It is not affiliated with, endorsed by, or supported by any commercial product with a similar name. See [TRADEMARKS.md](TRADEMARKS.md).
 
+The public website is maintained in [openQomu-web](https://github.com/qalyBuild/openQomu-web).
+
 ## Features
 
 - **Channels and threads** with mentions, reactions, replies, editing, typing indicators and delivery receipts.

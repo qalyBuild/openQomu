@@ -12,6 +12,8 @@ openQomu es un espacio de trabajo colaborativo que puedes alojar tú: chat en ti
 
 openQomu es un proyecto independiente de código abierto. No está afiliado, respaldado ni soportado por ningún producto comercial con un nombre similar. Consulta [TRADEMARKS.es.md](TRADEMARKS.es.md).
 
+La web pública se mantiene en [openQomu-web](https://github.com/qalyBuild/openQomu-web).
+
 ## Funcionalidades
 
 - **Canales e hilos** con menciones, reacciones, respuestas, edición, indicador de escritura y confirmaciones de lectura.
