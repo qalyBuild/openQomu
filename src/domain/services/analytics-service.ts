@@ -1,10 +1,19 @@
 import type { DashboardMetrics, TrendDatum } from '@/domain/entities/analytics'
 import type { Member } from '@/domain/entities/identity'
 import { PRIORITY_META, PRIORITY_VALUES } from '@/domain/entities/identity'
-import { isReviewColumn, type BoardColumn, type Task } from '@/domain/entities/kanban'
+import { isBoardMuted, isReviewColumn, type Board, type BoardColumn, type Task } from '@/domain/entities/kanban'
 import type { Priority } from '@/domain/entities/identity'
 import { addDays, dayKey, isOverdue } from '@/lib/date'
 import { isTaskCompleted, tasksDueSoon } from './task-service'
+
+/** Los tableros inactivos conservan sus datos históricos, pero no aportan tareas pendientes. */
+export function dashboardTasks(tasks: Task[], boards: Board[]): Task[] {
+  const byId = new Map(boards.map((board) => [board.id, board]))
+  return tasks.filter((task) => {
+    const board = byId.get(task.boardId)
+    return !board || !isBoardMuted(board.status) || isTaskCompleted(task, board.columns)
+  })
+}
 
 export function buildCompletionTrend(
   tasks: Task[],

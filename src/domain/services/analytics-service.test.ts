@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Member } from '@/domain/entities/identity'
-import { DEFAULT_BOARD_COLUMNS, mergeBoardColumns, type Task } from '@/domain/entities/kanban'
-import { buildCompletionTrend, buildDashboard } from './analytics-service'
+import { DEFAULT_BOARD_COLUMNS, mergeBoardColumns, type Board, type Task } from '@/domain/entities/kanban'
+import { buildCompletionTrend, buildDashboard, dashboardTasks } from './analytics-service'
 
 const NOW = new Date('2026-11-12T12:00:00.000Z')
 
@@ -50,6 +50,21 @@ const tasks = [
 ]
 
 describe('analytics-service', () => {
+  it('excluye las tareas pendientes de tableros inactivos y conserva las completadas', () => {
+    const boards = [
+      { id: 'normal', status: 'normal', columns: DEFAULT_BOARD_COLUMNS },
+      { id: 'paused', status: 'paused', columns: DEFAULT_BOARD_COLUMNS },
+      { id: 'deprecated', status: 'deprecated', columns: DEFAULT_BOARD_COLUMNS },
+    ] as Board[]
+    const result = dashboardTasks([
+      task({ id: 'active', boardId: 'normal' }),
+      task({ id: 'paused', boardId: 'paused' }),
+      task({ id: 'deprecated', boardId: 'deprecated' }),
+      task({ id: 'finished', boardId: 'paused', columnId: 'done' }),
+    ], boards)
+    expect(result.map(({ id }) => id)).toEqual(['active', 'finished'])
+    expect(buildDashboard(result, DEFAULT_BOARD_COLUMNS, [], NOW).open).toBe(1)
+  })
   it('calcula métricas del dashboard', () => {
     const metrics = buildDashboard(tasks, DEFAULT_BOARD_COLUMNS, [member('u1', 'Ana'), member('u2', 'Bruno')], NOW)
     expect(metrics.total).toBe(4)
