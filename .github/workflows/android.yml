@@ -80,7 +80,7 @@ jobs:
             cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/openqomu.apk"
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: openqomu-android-apk
           path: ${{ runner.temp }}/openqomu.apk
